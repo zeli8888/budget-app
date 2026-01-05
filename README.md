@@ -97,8 +97,14 @@ budget-app/
 │   │   ├── usecase/        # Logic: Validation, Calculation, Ownership checks
 │   │   ├── repository/     # Data: SQLite implementation
 │   │   └── delivery/http/  # Transport: Echo handlers, Request parsing
+│   ├── pkg/
+│   │   ├── firebase/       # Firebase Auth client
+│   │   └── database/       # SQLite connection
 │   └── ...
-└── frontend/               # React + TypeScript application
+├── frontend/               # React + TypeScript application
+├── docker-compose.yml      # Container orchestration
+├── Jenkinsfile             # CI/CD pipeline
+└── .env.example            # Environment template
 ```
 
 ## 🛠 Tech Stack Decisions
@@ -130,3 +136,14 @@ budget-app/
     ```bash
     npm start
     ```
+
+### Docker Setup
+1.  Copy `.env.example` to `.env` and configure.
+2.  Run with Docker Compose:
+    ```bash
+    docker-compose up -d
+    ```
+
+## 📦 Deployment
+
+The project includes a Jenkinsfile for CI/CD automation. Configure your Jenkins server with the appropriate credentials and webhook triggers.
