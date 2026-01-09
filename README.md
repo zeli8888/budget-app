@@ -123,7 +123,7 @@ budget-app/
 
 ### Backend Setup
 1.  Navigate to `backend/`.
-2.  Copy `.env.example` to `.env` and add your Firebase credentials path.
+2.  Check env variables in [main.go](backend/cmd/api/main.go)
 3.  Run the server:
     ```bash
     go run cmd/api/main.go
@@ -132,14 +132,14 @@ budget-app/
 ### Frontend Setup
 1.  Navigate to `frontend/`.
 2.  Install dependencies: `npm install`.
-3.  Start the dev server:
+3.  Check env variables in [.env](frontend/.env)
+4.  Start the dev server:
     ```bash
     npm start
     ```
 
 ### Docker Setup
-1.  Copy `.env.example` to `.env` and configure.
-2.  Run with Docker Compose:
+1.  Run with Docker Compose:
     ```bash
     docker-compose up -d
     ```

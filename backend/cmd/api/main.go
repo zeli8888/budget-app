@@ -24,8 +24,8 @@ func main() {
 	// Load configuration
 	port := getEnv("PORT", "8080")
 	dbPath := getEnv("DATABASE_PATH", "./data/budget.db")
-	firebaseCredPath := getEnv("FIREBASE_CREDENTIALS_PATH", "./firebase-credentials.json")
-	corsOrigins := getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+	firebaseCredPath := getEnv("FIREBASE_CREDENTIALS_PATH", "./firebase-private-key.json")
+	corsOrigins := getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,https://zeli8888.ddns.net")
 
 	// Initialize database
 	db, err := database.NewSQLiteDB(dbPath)
