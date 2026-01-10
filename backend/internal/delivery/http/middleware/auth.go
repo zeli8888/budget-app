@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/budget-app/backend/pkg/firebase"
 	"github.com/labstack/echo/v4"
+	"github.com/zeli8888/budget-app/backend/pkg/firebase"
 )
 
 type AuthMiddleware struct {

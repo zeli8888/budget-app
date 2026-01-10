@@ -3,7 +3,7 @@ package usecase
 import (
 	"time"
 
-	"github.com/budget-app/backend/internal/domain"
+	"github.com/zeli8888/budget-app/backend/internal/domain"
 )
 
 type StatsUsecase struct {

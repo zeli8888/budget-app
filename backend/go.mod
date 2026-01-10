@@ -1,4 +1,4 @@
-module github.com/budget-app/backend
+module github.com/zeli8888/budget-app/backend
 
 go 1.21
 

@@ -10,14 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/budget-app/backend/internal/delivery/http/handler"
-	"github.com/budget-app/backend/internal/delivery/http/middleware"
-	"github.com/budget-app/backend/internal/repository/sqlite"
-	"github.com/budget-app/backend/internal/usecase"
-	"github.com/budget-app/backend/pkg/database"
-	"github.com/budget-app/backend/pkg/firebase"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/zeli8888/budget-app/backend/internal/delivery/http/handler"
+	"github.com/zeli8888/budget-app/backend/internal/delivery/http/middleware"
+	"github.com/zeli8888/budget-app/backend/internal/repository/sqlite"
+	"github.com/zeli8888/budget-app/backend/internal/usecase"
+	"github.com/zeli8888/budget-app/backend/pkg/database"
+	"github.com/zeli8888/budget-app/backend/pkg/firebase"
 )
 
 func main() {

@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/budget-app/backend/internal/domain"
-	"github.com/budget-app/backend/internal/usecase"
 	"github.com/labstack/echo/v4"
+	"github.com/zeli8888/budget-app/backend/internal/domain"
+	"github.com/zeli8888/budget-app/backend/internal/usecase"
 )
 
 type TransactionHandler struct {
