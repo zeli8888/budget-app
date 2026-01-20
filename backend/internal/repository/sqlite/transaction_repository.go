@@ -54,7 +54,7 @@ func (r *TransactionRepository) Create(tx *domain.Transaction) error {
 
 func (r *TransactionRepository) GetByID(id int64) (*domain.Transaction, error) {
 	query := `
-		SELECT id, user_id, amount, currency, type, category, payment_method, transaction_at, metadata, created_at, updated_at
+		SELECT id, user_id, amount, currency, type, category, payment_method, transaction_at, metadata
 		FROM transactions
 		WHERE id = ?
 	`
@@ -72,8 +72,6 @@ func (r *TransactionRepository) GetByID(id int64) (*domain.Transaction, error) {
 		&tx.PaymentMethod,
 		&tx.TransactionAt,
 		&metadataStr,
-		&tx.CreatedAt,
-		&tx.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrNotFound
@@ -119,7 +117,7 @@ func (r *TransactionRepository) GetByUserID(filter domain.TransactionFilter) ([]
 	}
 
 	query := fmt.Sprintf(`
-		SELECT id, user_id, amount, currency, type, category, payment_method, transaction_at, metadata, created_at, updated_at
+		SELECT id, user_id, amount, currency, type, category, payment_method, transaction_at, metadata
 		FROM transactions
 		WHERE %s
 		ORDER BY transaction_at DESC, id DESC
@@ -153,8 +151,6 @@ func (r *TransactionRepository) GetByUserID(filter domain.TransactionFilter) ([]
 			&tx.PaymentMethod,
 			&tx.TransactionAt,
 			&metadataStr,
-			&tx.CreatedAt,
-			&tx.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -170,7 +166,7 @@ func (r *TransactionRepository) GetByUserID(filter domain.TransactionFilter) ([]
 func (r *TransactionRepository) Update(tx *domain.Transaction) error {
 	query := `
 		UPDATE transactions
-		SET amount = ?, currency = ?, type = ?, category = ?, payment_method = ?, transaction_at = ?, metadata = ?, updated_at = ?
+		SET amount = ?, currency = ?, type = ?, category = ?, payment_method = ?, transaction_at = ?, metadata = ?
 		WHERE id = ?
 	`
 
@@ -187,7 +183,6 @@ func (r *TransactionRepository) Update(tx *domain.Transaction) error {
 		tx.PaymentMethod,
 		tx.TransactionAt,
 		string(metadataJSON),
-		time.Now(),
 		tx.ID,
 	)
 	if err != nil {

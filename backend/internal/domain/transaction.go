@@ -22,8 +22,6 @@ type Transaction struct {
 	PaymentMethod string          `json:"payment_method"`
 	TransactionAt time.Time       `json:"transaction_at"`
 	Metadata      json.RawMessage `json:"metadata"`
-	CreatedAt     time.Time       `json:"created_at"`
-	UpdatedAt     time.Time       `json:"updated_at"`
 }
 
 type TransactionFilter struct {
