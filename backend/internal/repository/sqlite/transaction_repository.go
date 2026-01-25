@@ -230,7 +230,7 @@ func (r *TransactionRepository) GetSummary(userID string, startDate, endDate tim
 		WHERE user_id = ? AND transaction_at >= ? AND transaction_at <= ?
 	`
 
-	summary := &domain.StatsSummary{Currency: "USD"}
+	summary := &domain.StatsSummary{Currency: "EUR"}
 
 	err := r.db.QueryRow(query, userID, startDate, endDate).Scan(
 		&summary.TotalIncome,

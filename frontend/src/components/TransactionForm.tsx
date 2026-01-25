@@ -15,12 +15,12 @@ const CATEGORIES = {
 
 const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Alipay', 'WeChat Pay', 'Other'];
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'CNY', 'JPY'];
+const CURRENCIES = ['EUR', 'EUR', 'GBP', 'CNY', 'JPY'];
 
 const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData, onCancel }) => {
   const [type, setType] = useState<'income' | 'expense'>(initialData?.type || 'expense');
   const [amount, setAmount] = useState(initialData ? (initialData.amount / 100).toString() : '');
-  const [currency, setCurrency] = useState(initialData?.currency || 'USD');
+  const [currency, setCurrency] = useState(initialData?.currency || 'EUR');
   const [category, setCategory] = useState(initialData?.category || '');
   const [paymentMethod, setPaymentMethod] = useState(initialData?.payment_method || 'Cash');
   const [transactionAt, setTransactionAt] = useState(

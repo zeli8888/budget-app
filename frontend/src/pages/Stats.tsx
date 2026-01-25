@@ -265,7 +265,7 @@ const Stats: React.FC = () => {
                       ></span>
                       {stat.category}
                     </td>
-                    <td>{formatAmount(stat.total, 'USD')}</td>
+                    <td>{formatAmount(stat.total, 'EUR')}</td>
                     <td>{stat.percentage.toFixed(1)}%</td>
                     <td>{stat.count}</td>
                   </tr>

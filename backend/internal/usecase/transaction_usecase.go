@@ -61,7 +61,7 @@ func (u *TransactionUsecase) Create(userID string, input CreateTransactionInput)
 	// Normalize currency
 	currency := strings.ToUpper(input.Currency)
 	if currency == "" {
-		currency = "USD"
+		currency = "EUR"
 	}
 
 	// Default payment method

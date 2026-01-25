@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id TEXT NOT NULL,
     amount INTEGER NOT NULL,
-    currency TEXT NOT NULL DEFAULT 'USD',
+    currency TEXT NOT NULL DEFAULT 'EUR',
     type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
     category TEXT NOT NULL,
     payment_method TEXT NOT NULL DEFAULT 'Cash',
