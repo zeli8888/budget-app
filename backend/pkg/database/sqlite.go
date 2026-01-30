@@ -43,7 +43,7 @@ func RunMigrations(db *sql.DB) error {
 			category TEXT NOT NULL,
 			payment_method TEXT NOT NULL DEFAULT 'Unknown',
 			transaction_at DATETIME NOT NULL,
-			metadata JSON DEFAULT '{}',
+			metadata JSON DEFAULT '{}'
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, transaction_at)`,
