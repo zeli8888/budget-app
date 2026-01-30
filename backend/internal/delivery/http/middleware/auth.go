@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -19,6 +20,14 @@ func NewAuthMiddleware(firebaseAuth *firebase.FirebaseAuth) *AuthMiddleware {
 func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		authHeader := c.Request().Header.Get("Authorization")
+
+		// --- only for development testing ---
+		if os.Getenv("APP_ENV") != "production" && authHeader == "Bearer debug-token" {
+			c.Set("user_id", "dev-user-id")
+			c.Set("user_email", "dev@example.com")
+			return next(c)
+		}
+
 		if authHeader == "" {
 			return c.JSON(http.StatusUnauthorized, map[string]string{
 				"error": "missing authorization header",
