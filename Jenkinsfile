@@ -32,10 +32,12 @@ pipeline {
 
         stage('Deploy') {
             steps {
+                dir('backend') {
                     sh '''
                         docker compose -p budget-app -f docker-compose.yml up -d --force-recreate
                         docker image prune -f
                     '''
+                }
             }
         }
     }
