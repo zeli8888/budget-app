@@ -1,14 +1,10 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: budget-backend
-    restart: unless-stopped
+  budget-backend:
+    image: zeli8888/budget-backend:latest
     ports:
-      - "8080:8080"
+      - "8002:8080"
     environment:
       - PORT=8080
       - DATABASE_PATH=/app/data/budget.db
@@ -17,7 +13,7 @@ services:
       - APP_ENV=production
     volumes:
       - budget_data:/app/data
-      - ./firebase-private-key.json:/app/firebase-private-key.json:ro
+      - ${FIREBASE_CREDENTIALS_FILE:-./firebase-private-key.json}:/app/firebase-private-key.json:ro
 
 volumes:
   budget_data:
