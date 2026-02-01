@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         FIREBASE_CREDENTIALS_FILE = "/var/lib/jenkins/my-project-secrets/firebase-private-key.json"
+        APP_ENV = "production"
     }
 
     stages {

@@ -10,7 +10,7 @@ services:
       - DATABASE_PATH=/app/data/budget.db
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-private-key.json
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,https://zeli8888.ddns.net
-      - APP_ENV=production
+      - APP_ENV=${APP_ENV:-development}
     volumes:
       - budget_data:/app/data
       - ${FIREBASE_CREDENTIALS_FILE:-./firebase-private-key.json}:/app/firebase-private-key.json:ro
