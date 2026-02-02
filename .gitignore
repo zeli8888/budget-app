@@ -36,3 +36,6 @@ backend/data
 
 # firebase key
 firebase-private-key.json
+
+# node_modules
+node_modules
