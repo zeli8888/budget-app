@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "composite": true, // Allows this project to be referenced by the main tsconfig.json
+        "skipLibCheck": true, // Skips checking types in node_modules to improve performance
+        "module": "ESNext", // Specifies the module system for the Node.js environment
+        "moduleResolution": "Bundler", // Tells TS to use the same file-finding logic as the bundler (Vite)
+        "allowSyntheticDefaultImports": true, // Allows cleaner imports for packages that don't have a default export
+        "strict": true // Enables strict type-checking for the Vite configuration file
+    },
+    "include": [
+        "vite.config.ts" // Specifically targets only the Vite configuration file
+    ]
+}

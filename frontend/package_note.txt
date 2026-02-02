@@ -1,0 +1,42 @@
+{
+  "name": "budget-frontend",                // Name of your project
+  "version": "1.0.0",                       // Current version of your application
+  "private": true,                          // Prevents the project from being accidentally published to the public npm registry
+  "dependencies": {                         // Production libraries required for the app to run
+    "@types/node": "^20.10.0",              // TypeScript definitions for Node.js environment
+    "@types/react": "^18.2.0",              // TypeScript definitions for React core
+    "@types/react-dom": "^18.2.0",          // TypeScript definitions for React DOM (web)
+    "axios": "^1.6.2",                      // Library for making API calls (HTTP requests)
+    "chart.js": "^4.4.1",                   // The base library for data visualization/charts
+    "date-fns": "^2.30.0",                  // Modern library for formatting and manipulating dates
+    "firebase": "^10.7.1",                  // Google Firebase SDK for backend services (DB, Auth)
+    "react": "^18.2.0",                     // Core React library
+    "react-chartjs-2": "^5.2.0",            // React component wrapper for Chart.js
+    "react-dom": "^18.2.0",                 // Entry point for React into the browser DOM
+    "react-router-dom": "^6.21.0",          // Library for handling page navigation and routing
+    "typescript": "^5.3.0"                  // The TypeScript language and compiler
+  },
+  "scripts": {                              // Shortcuts for terminal commands
+    "dev": "vite",                          // Command to start the fast Vite development server
+    "start": "vite",                        // Alias for 'dev', keeps it familiar for CRA users
+    "build": "tsc && vite build",           // Checks for TS errors first, then builds for production
+    "preview": "vite preview"               // Locally serves the production build for testing
+  },
+  "browserslist": {                         // Defines which browsers the code will target/support
+    "production": [                         // Settings for the live website
+      ">0.2%",                              // Support browsers with more than 0.2% global usage
+      "not dead",                           // Exclude browsers that no longer receive updates
+      "not op_mini all"                     // Exclude Opera Mini (limited modern feature support)
+    ],
+    "development": [                        // Settings for local development
+      "last 1 chrome version",              // Optimize for the latest version of Chrome
+      "last 1 firefox version",             // Optimize for the latest version of Firefox
+      "last 1 safari version"               // Optimize for the latest version of Safari
+    ]
+  },
+  "devDependencies": {                      // Tools only used for building/development, not in production
+    "@vitejs/plugin-react": "^4.2.0",       // Plugin that provides React support for Vite
+    "vite": "^5.0.0",                       // The modern, fast build tool/engine replacing react-scripts
+    "vite-tsconfig-paths": "^4.2.1"         // Allows Vite to understand custom paths defined in tsconfig.json
+  }
+}

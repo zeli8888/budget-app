@@ -1,20 +1,35 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx"
+    "target": "ESNext", // Target modern browsers for the fastest code execution
+    "useDefineForClassFields": true, // Follows standard JS behavior for class properties
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ], // Includes type definitions for the browser environment and modern JS
+    "allowJs": true, // Allows importing .js and .jsx files into your TS project
+    "skipLibCheck": true, // Speeds up build by skipping type checks of all declaration files in node_modules
+    "esModuleInterop": true, // Enables compatibility when importing CommonJS modules (like React)
+    "allowSyntheticDefaultImports": true, // Allows 'import React from "react"' instead of 'import * as React'
+    "strict": true, // Enables all strict type-checking options for better code quality
+    "forceConsistentCasingInFileNames": true, // Ensures case-sensitivity works correctly across Windows, Mac, and Linux
+    "noFallthroughCasesInSwitch": true, // Prevents bugs by ensuring switch cases don't accidentally "bleed" into the next one
+    "module": "ESNext", // Use modern ES Modules (required by Vite)
+    "moduleResolution": "Bundler", // Recommended for Vite to resolve modules correctly
+    "resolveJsonModule": true, // Allows you to import .json files directly
+    "isolatedModules": true, // Required by Vite/esbuild to ensure files can be compiled independently
+    "noEmit": true, // Tells tsc not to output JS files (Vite/esbuild handles the actual building)
+    "jsx": "react-jsx", // Support for the modern React JSX transform (React 17+)
+    "types": [
+      "vite/client"
+    ] // Injects types for Vite-specific features like import.meta.env
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ], // Only compile/check files inside the src folder
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ] // Links to the separate configuration for the Vite config file itself
 }
