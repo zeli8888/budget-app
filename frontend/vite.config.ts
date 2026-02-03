@@ -12,7 +12,7 @@ export default defineConfig({
 
     // server: Configures the local development environment
     server: {
-        port: 5173, // Optional: The port to run the development server on
+        port: 3000, // Optional: The port to run the development server on
         open: true  // Optional: Automatically opens your browser when you run 'npm run dev'
     },
 });

@@ -22,9 +22,10 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 const App: React.FC = () => {
+  const baseName = import.meta.env.VITE_CONTEXT || '/';
   return (
     <AuthProvider>
-      <Router>
+      <Router basename={baseName}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
