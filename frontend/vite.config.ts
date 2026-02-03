@@ -12,12 +12,7 @@ export default defineConfig({
 
     // server: Configures the local development environment
     server: {
-        port: 3000, // Changes the default port from 5173 to 3000 (matches the old Create React App default)
+        port: 5173, // Optional: The port to run the development server on
         open: true  // Optional: Automatically opens your browser when you run 'npm run dev'
     },
-
-    // build: Configures how the project is compiled for production
-    build: {
-        outDir: 'build' // Optional: Changes output folder from 'dist' to 'build' to match old CRA behavior
-    }
 });
