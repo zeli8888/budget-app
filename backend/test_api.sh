@@ -3,7 +3,7 @@
 # ==========================================
 # Configuration
 # ==========================================
-BASE_URL="http://localhost:8002"
+BASE_URL="http://localhost:8002/budget"
 API_URL="$BASE_URL/api/v1"
 # The backdoor token defined in your Go code
 TOKEN="Bearer debug-token"

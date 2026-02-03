@@ -22,10 +22,11 @@ import (
 
 func main() {
 	// Load configuration
-	port := getEnv("PORT", "8080")
+	port := getEnv("PORT", "8002")
 	dbPath := getEnv("DATABASE_PATH", "./data/budget.db")
 	firebaseCredPath := getEnv("FIREBASE_CREDENTIALS_PATH", "./firebase-private-key.json")
 	corsOrigins := getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,https://zeli8888.ddns.net")
+	contextPath := getEnv("CONTEXT_PATH", "/budget")
 
 	// Initialize database
 	db, err := database.NewSQLiteDB(dbPath)
@@ -67,12 +68,13 @@ func main() {
 	}))
 
 	// Health check
-	e.GET("/health", func(c echo.Context) error {
+	budget := e.Group(contextPath)
+	budget.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
 	})
 
 	// API routes
-	api := e.Group("/api/v1")
+	api := budget.Group("/api/v1")
 
 	// Auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(firebaseAuth)
