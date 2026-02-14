@@ -12,7 +12,6 @@ import {
 import { Pie, Bar } from 'react-chartjs-2';
 import { statsApi, StatsSummary, CategoryStat } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
-import './Stats.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -104,89 +103,97 @@ const Stats: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="loading">
+      <div className="flex justify-center items-center py-20">
         <div className="spinner"></div>
       </div>
     );
   }
 
   return (
-    <div className="stats-page">
-      <h1>Statistics</h1>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <h1 className="text-3xl font-bold text-gray-900">Statistics</h1>
 
-      <div className="stats-controls card">
-        <div className="date-range">
-          <div className="form-group">
-            <label>Start Date</label>
+      <div className="bg-white rounded-2xl shadow-md p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="form-label">Start Date</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              className="form-input"
             />
           </div>
-          <div className="form-group">
-            <label>End Date</label>
+          <div>
+            <label className="form-label">End Date</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              className="form-input"
             />
           </div>
         </div>
 
-        <div className="preset-buttons">
-          <button className="btn btn-secondary" onClick={() => setPresetRange(0)}>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn btn-outline text-sm py-2" onClick={() => setPresetRange(0)}>
             This Month
           </button>
-          <button className="btn btn-secondary" onClick={() => setPresetRange(3)}>
+          <button className="btn btn-outline text-sm py-2" onClick={() => setPresetRange(3)}>
             Last 3 Months
           </button>
-          <button className="btn btn-secondary" onClick={() => setPresetRange(6)}>
+          <button className="btn btn-outline text-sm py-2" onClick={() => setPresetRange(6)}>
             Last 6 Months
           </button>
-          <button className="btn btn-secondary" onClick={() => setPresetRange(12)}>
+          <button className="btn btn-outline text-sm py-2" onClick={() => setPresetRange(12)}>
             Last Year
           </button>
         </div>
       </div>
 
       {summary && (
-        <div className="summary-section">
-          <div className="summary-grid">
-            <div className="stat-card income">
-              <div className="stat-label">Total Income</div>
-              <div className="stat-value">
-                {formatAmount(summary.total_income, summary.currency)}
-              </div>
-            </div>
-            <div className="stat-card expense">
-              <div className="stat-label">Total Expenses</div>
-              <div className="stat-value">
-                {formatAmount(summary.total_expense, summary.currency)}
-              </div>
-            </div>
-            <div className="stat-card balance">
-              <div className="stat-label">Net Balance</div>
-              <div className={`stat-value ${summary.net_balance >= 0 ? 'positive' : 'negative'}`}>
-                {formatAmount(summary.net_balance, summary.currency)}
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p className="text-sm font-medium text-gray-500 mb-1">Total Income</p>
+            <p className="text-2xl font-bold text-success-600">
+              {formatAmount(summary.total_income, summary.currency)}
+            </p>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p className="text-sm font-medium text-gray-500 mb-1">Total Expenses</p>
+            <p className="text-2xl font-bold text-danger-600">
+              {formatAmount(summary.total_expense, summary.currency)}
+            </p>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p className="text-sm font-medium text-gray-500 mb-1">Net Balance</p>
+            <p className={`text-2xl font-bold ${summary.net_balance >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+              {formatAmount(summary.net_balance, summary.currency)}
+            </p>
           </div>
         </div>
       )}
 
-      <div className="charts-section">
-        <div className="chart-header">
-          <h2>Category Breakdown</h2>
-          <div className="type-toggle">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Category Breakdown</h2>
+          <div className="flex bg-gray-100 rounded-lg p-1">
             <button
-              className={`toggle-btn ${statsType === 'expense' ? 'active' : ''}`}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                statsType === 'expense'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
               onClick={() => setStatsType('expense')}
             >
               Expenses
             </button>
             <button
-              className={`toggle-btn ${statsType === 'income' ? 'active' : ''}`}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                statsType === 'income'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
               onClick={() => setStatsType('income')}
             >
               Income
@@ -195,84 +202,104 @@ const Stats: React.FC = () => {
         </div>
 
         {categoryStats.length === 0 ? (
-          <div className="empty-state card">
-            <p>No data available for the selected period</p>
+          <div className="bg-white rounded-2xl shadow-md p-12 text-center">
+            <p className="text-gray-500">No data available for the selected period</p>
           </div>
         ) : (
-          <div className="charts-grid">
-            <div className="chart-card card">
-              <h3>Distribution</h3>
-              <div className="pie-container">
-                <Pie
-                  data={pieData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white rounded-2xl shadow-md p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Distribution</h3>
+                <div className="h-72">
+                  <Pie
+                    data={pieData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                        },
                       },
-                    },
-                  }}
-                />
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-md p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">By Category</h3>
+                <div className="h-72">
+                  <Bar
+                    data={barData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: false,
+                        },
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                        },
+                      },
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="chart-card card">
-              <h3>By Category</h3>
-              <div className="bar-container">
-                <Bar
-                  data={barData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                      },
-                    },
-                  }}
-                />
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+              <div className="p-6 border-b border-gray-100">
+                <h3 className="text-lg font-medium text-gray-900">Details</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Percentage
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Count
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {categoryStats.map((stat, index) => (
+                      <tr key={stat.category} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            ></span>
+                            <span className="font-medium text-gray-900">{stat.category}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                          {formatAmount(stat.total, 'EUR')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                          {stat.percentage.toFixed(1)}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                          {stat.count}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
-        )}
-
-        {categoryStats.length > 0 && (
-          <div className="category-table card">
-            <h3>Details</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Amount</th>
-                  <th>Percentage</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categoryStats.map((stat, index) => (
-                  <tr key={stat.category}>
-                    <td>
-                      <span
-                        className="color-dot"
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                      ></span>
-                      {stat.category}
-                    </td>
-                    <td>{formatAmount(stat.total, 'EUR')}</td>
-                    <td>{stat.percentage.toFixed(1)}%</td>
-                    <td>{stat.count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          </>
         )}
       </div>
     </div>

@@ -7,16 +7,21 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: (rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   getIdToken: () => Promise<string | null>;
 }
 
@@ -43,7 +48,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
+    const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
     await signInWithEmailAndPassword(auth, email, password);
   };
 
@@ -51,13 +58,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await createUserWithEmailAndPassword(auth, email, password);
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (rememberMe: boolean = false) => {
+    const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
 
   const logout = async () => {
     await signOut(auth);
+  };
+
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
   };
 
   const getIdToken = async (): Promise<string | null> => {
@@ -74,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     loginWithGoogle,
     logout,
+    resetPassword,
     getIdToken,
   };
 

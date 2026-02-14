@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { CreateTransactionInput, Transaction, UpdateTransactionInput } from '../services/api';
-import './TransactionForm.css';
 
 interface TransactionFormProps {
   onSubmit: (data: CreateTransactionInput | UpdateTransactionInput) => Promise<void>;
@@ -15,7 +14,7 @@ const CATEGORIES = {
 
 const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Alipay', 'WeChat Pay', 'Other'];
 
-const CURRENCIES = ['EUR', 'EUR', 'GBP', 'CNY', 'JPY'];
+const CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'JPY'];
 
 const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData, onCancel }) => {
   const [type, setType] = useState<'income' | 'expense'>(initialData?.type || 'expense');
@@ -66,36 +65,48 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
   };
 
   return (
-    <form className="transaction-form" onSubmit={handleSubmit}>
-      <h2>{initialData ? 'Edit Transaction' : 'New Transaction'}</h2>
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-md p-6">
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        {initialData ? 'Edit Transaction' : 'New Transaction'}
+      </h2>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="mb-4 p-4 bg-danger-50 border border-danger-200 rounded-lg text-sm text-danger-700">
+          {error}
+        </div>
+      )}
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Type</label>
-          <div className="type-toggle">
-            <button
-              type="button"
-              className={`type-btn ${type === 'expense' ? 'active expense' : ''}`}
-              onClick={() => setType('expense')}
-            >
-              Expense
-            </button>
-            <button
-              type="button"
-              className={`type-btn ${type === 'income' ? 'active income' : ''}`}
-              onClick={() => setType('income')}
-            >
-              Income
-            </button>
-          </div>
+      <div className="mb-6">
+        <label className="form-label">Type</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className={`flex-1 py-3 px-4 rounded-lg font-medium border-2 transition-all ${
+              type === 'expense'
+                ? 'border-danger-500 bg-danger-50 text-danger-700'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+            }`}
+            onClick={() => setType('expense')}
+          >
+            📉 Expense
+          </button>
+          <button
+            type="button"
+            className={`flex-1 py-3 px-4 rounded-lg font-medium border-2 transition-all ${
+              type === 'income'
+                ? 'border-success-500 bg-success-50 text-success-700'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+            }`}
+            onClick={() => setType('income')}
+          >
+            📈 Income
+          </button>
         </div>
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Amount</label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="form-label">Amount</label>
           <input
             type="number"
             step="0.01"
@@ -103,81 +114,112 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
+            className="form-input"
             required
           />
         </div>
-        <div className="form-group">
-          <label>Currency</label>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+        <div>
+          <label className="form-label">Currency</label>
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className="form-input"
+          >
             {CURRENCIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Category</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} required>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="form-label">Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="form-input"
+            required
+          >
             <option value="">Select category</option>
             {CATEGORIES[type].map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
-        <div className="form-group">
-          <label>Payment Method</label>
-          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+        <div>
+          <label className="form-label">Payment Method</label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            className="form-input"
+          >
             {PAYMENT_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
+              <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Date</label>
+      <div className="mb-4">
+        <label className="form-label">Date</label>
         <input
           type="date"
           value={transactionAt}
           onChange={(e) => setTransactionAt(e.target.value)}
+          className="form-input"
           required
         />
       </div>
 
-      <div className="form-group">
-        <label>Description (optional)</label>
+      <div className="mb-4">
+        <label className="form-label">Description (optional)</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Add a note..."
           rows={2}
+          className="form-input resize-none"
         />
       </div>
 
-      <div className="form-group">
-        <label>Tags (optional, comma-separated)</label>
+      <div className="mb-6">
+        <label className="form-label">Tags (optional, comma-separated)</label>
         <input
           type="text"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           placeholder="e.g., groceries, weekly"
+          className="form-input"
         />
       </div>
 
-      <div className="form-actions">
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          className="btn btn-outline"
+          onClick={onCancel}
+        >
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'Saving...' : initialData ? 'Update' : 'Create'}
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Saving...
+            </span>
+          ) : initialData ? (
+            'Update'
+          ) : (
+            'Create'
+          )}
         </button>
       </div>
     </form>
