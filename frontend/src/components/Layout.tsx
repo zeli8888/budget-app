@@ -33,33 +33,30 @@ const Layout: React.FC = () => {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     to="/"
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isActive('/')
-                        ? 'bg-white/20 text-white'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${isActive('/')
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                      }`}
                   >
                     <span className="hidden sm:inline">Dashboard</span>
                     <span className="sm:hidden">📊</span>
                   </Link>
                   <Link
                     to="/transactions"
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isActive('/transactions')
-                        ? 'bg-white/20 text-white'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${isActive('/transactions')
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                      }`}
                   >
                     <span className="hidden sm:inline">Transactions</span>
                     <span className="sm:hidden">💳</span>
                   </Link>
                   <Link
                     to="/stats"
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isActive('/stats')
-                        ? 'bg-white/20 text-white'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${isActive('/stats')
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                      }`}
                   >
                     <span className="hidden sm:inline">Statistics</span>
                     <span className="sm:hidden">📈</span>
@@ -105,7 +102,7 @@ const Layout: React.FC = () => {
       <footer className="bg-white border-t border-gray-200 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-gray-500">
-            © {new Date().getFullYear()} Budget App. All rights reserved.
+            © {new Date().getFullYear()} Made with love by Ze Li.
           </p>
         </div>
       </footer>

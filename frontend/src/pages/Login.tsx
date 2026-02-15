@@ -120,8 +120,8 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-120px)] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-full mb-4">
+        <div className="text-center mb-5">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-500 rounded-full mb-4">
             <span className="text-3xl">💰</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">{getTitle()}</h1>
@@ -133,22 +133,20 @@ const Login: React.FC = () => {
             <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
               <button
                 type="button"
-                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${
-                  mode === 'login'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${mode === 'login'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 onClick={() => switchMode('login')}
               >
                 Sign In
               </button>
               <button
                 type="button"
-                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${
-                  mode === 'register'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${mode === 'register'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 onClick={() => switchMode('register')}
               >
                 Create Account
@@ -354,7 +352,7 @@ const Login: React.FC = () => {
           )}
         </div>
 
-        <p className="mt-8 text-center text-sm text-gray-500">
+        {/* <p className="mt-8 text-center text-sm text-gray-500">
           By continuing, you agree to our{' '}
           <a href="#" className="text-primary-600 hover:underline">
             Terms of Service
@@ -363,7 +361,7 @@ const Login: React.FC = () => {
           <a href="#" className="text-primary-600 hover:underline">
             Privacy Policy
           </a>
-        </p>
+        </p> */}
       </div>
     </div>
   );
