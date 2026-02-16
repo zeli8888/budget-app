@@ -124,7 +124,8 @@ budget-app/
 ### Backend Setup
 1.  Navigate to `backend/`.
 2.  Check env variables in [main.go](backend/cmd/api/main.go)
-3.  Run the server:
+3.  Install dependencies: `go mod tidy`.
+4.  Run the server:
     ```bash
     go run cmd/api/main.go
     ```
