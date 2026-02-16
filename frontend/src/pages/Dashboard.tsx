@@ -3,11 +3,21 @@ import { Link } from 'react-router-dom';
 import { statsApi, StatsSummary, transactionApi, Transaction } from '../services/api';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
+const VALID_ISO_CURRENCIES = new Set(Intl.supportedValuesOf('currency'));
+
 const formatAmount = (amount: number, currency: string): string => {
   const value = amount / 100;
+  const upperCurrency = currency.toUpperCase();
+  if (VALID_ISO_CURRENCIES.has(upperCurrency)) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: upperCurrency,
+    }).format(value);
+  }
   return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 };
 
@@ -125,9 +135,8 @@ const Dashboard: React.FC = () => {
             {recentTransactions.map((tx) => (
               <div key={tx.id} className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    tx.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
+                    }`}>
                     <span className="text-lg">{tx.type === 'income' ? '📈' : '📉'}</span>
                   </div>
                   <div>
