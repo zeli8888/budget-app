@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreateTransactionInput, Transaction, UpdateTransactionInput } from '../services/api';
 import CreatableSelect from 'react-select/creatable';
+import { creatableSelectStyles } from './utils';
 
 interface TransactionFormProps {
   onSubmit: (data: CreateTransactionInput | UpdateTransactionInput) => Promise<void>;
@@ -122,38 +123,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
           />
         </div>
 
-        {/* Right Column: Currency */}
         <div className="flex flex-col">
           <label className="form-label">Currency</label>
           <CreatableSelect
             isClearable
             options={CURRENCIES_OPTIONS}
             value={CURRENCIES_OPTIONS.find(opt => opt.value === currency) || (currency ? { value: currency, label: currency } : null)}
-            onChange={(newValue) => setCurrency(newValue ? newValue.value : '')}
-
-            /* THIS IS THE FIX FOR WIDTH: */
-            className="w-full"
-
-            /* Styling it to match form-input perfectly */
-            styles={{
-              control: (base, state) => ({
-                ...base,
-                width: '100%',
-                minHeight: '46px', // Matches the height of your standard input
-                borderRadius: '0.5rem', // rounded-lg
-                borderColor: state.isFocused ? '#3b82f6' : '#d1d5db', // primary-500 : gray-300
-                boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.2)' : 'none',
-                '&:hover': {
-                  borderColor: state.isFocused ? '#3b82f6' : '#9ca3af', // gray-400
-                }
-              }),
-              valueContainer: (base) => ({
-                ...base,
-                paddingLeft: '1rem', // px-4
-                paddingRight: '1rem',
-              }),
-            }}
+            onChange={(newValue) => setCurrency(newValue ? newValue.value.toUpperCase() : '')}
             placeholder="Select..."
+            classNames={creatableSelectStyles}
           />
         </div>
       </div>
