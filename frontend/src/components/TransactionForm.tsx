@@ -14,6 +14,11 @@ const CATEGORIES = {
   income: ['Salary', 'Freelance', 'Investment', 'Gift', 'Refund', 'Other'],
 };
 
+const CATEGORIES_OPTIONS = {
+  expense: CATEGORIES.expense.map(c => ({ value: c, label: c })),
+  income: CATEGORIES.income.map(c => ({ value: c, label: c })),
+};
+
 const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Alipay', 'WeChat Pay', 'Other'];
 
 const PAYMENT_OPTIONS = PAYMENT_METHODS.map(p => ({ value: p, label: p }));
@@ -35,12 +40,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
   const [tags, setTags] = useState(initialData?.metadata?.tags?.join(', ') || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!initialData && !CATEGORIES[type].includes(category)) {
-      setCategory(CATEGORIES[type][0]);
-    }
-  }, [type, category, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,17 +138,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="form-label">Category</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="form-input"
-            required
-          >
-            <option value="">Select category</option>
-            {CATEGORIES[type].map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          <CreatableSelect
+            isClearable
+            options={CATEGORIES_OPTIONS[type]}
+            value={CATEGORIES_OPTIONS[type].find(opt => opt.value === category) || (category ? { value: category, label: category } : null)}
+            onChange={(newValue) => setCategory(newValue ? newValue.value : '')}
+            placeholder="Select..."
+            classNames={creatableSelectStyles}
+          />
         </div>
         <div>
           <label className="form-label">Payment Method</label>
