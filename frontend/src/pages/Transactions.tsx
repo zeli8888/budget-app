@@ -108,7 +108,9 @@ const Transactions: React.FC = () => {
 
       {(showForm || editingTransaction) && (
         <TransactionForm
-          onSubmit={editingTransaction ? handleUpdate : handleCreate}
+          onSubmit={(data: any) =>
+            editingTransaction ? handleUpdate(data) : handleCreate(data)
+          }
           initialData={editingTransaction || undefined}
           onCancel={handleCancelForm}
         />

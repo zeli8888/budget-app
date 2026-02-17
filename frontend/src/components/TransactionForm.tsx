@@ -44,7 +44,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
     try {
       const metadata: Record<string, any> = {};
       if (description) metadata.description = description;
-      if (tags) metadata.tags = tags.split(',').map((t) => t.trim()).filter(Boolean);
+      if (tags) metadata.tags = tags.split(',').map((t: string) => t.trim()).filter(Boolean);
 
       const data: CreateTransactionInput = {
         amount: parseFloat(amount),
@@ -81,22 +81,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
         <div className="flex gap-2">
           <button
             type="button"
-            className={`flex-1 py-3 px-4 rounded-lg font-medium border-2 transition-all ${
-              type === 'expense'
-                ? 'border-danger-500 bg-danger-50 text-danger-700'
-                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-            }`}
+            className={`flex-1 py-3 px-4 rounded-lg font-medium border-2 transition-all ${type === 'expense'
+              ? 'border-danger-500 bg-danger-50 text-danger-700'
+              : 'border-gray-200 text-gray-500 hover:border-gray-300'
+              }`}
             onClick={() => setType('expense')}
           >
             📉 Expense
           </button>
           <button
             type="button"
-            className={`flex-1 py-3 px-4 rounded-lg font-medium border-2 transition-all ${
-              type === 'income'
-                ? 'border-success-500 bg-success-50 text-success-700'
-                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-            }`}
+            className={`flex-1 py-3 px-4 rounded-lg font-medium border-2 transition-all ${type === 'income'
+              ? 'border-success-500 bg-success-50 text-success-700'
+              : 'border-gray-200 text-gray-500 hover:border-gray-300'
+              }`}
             onClick={() => setType('income')}
           >
             📈 Income
