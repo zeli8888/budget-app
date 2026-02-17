@@ -1,6 +1,7 @@
 import React from 'react';
 import { Transaction } from '../services/api';
 import { format } from 'date-fns';
+import { formatAmount } from './utils';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -8,14 +9,6 @@ interface TransactionListProps {
   onDelete: (id: number) => void;
   loading?: boolean;
 }
-
-const formatAmount = (amount: number, currency: string): string => {
-  const value = amount / 100;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-  }).format(value);
-};
 
 const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
@@ -47,15 +40,13 @@ const TransactionList: React.FC<TransactionListProps> = ({
       {transactions.map((tx) => (
         <div
           key={tx.id}
-          className={`bg-white rounded-xl shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow group ${
-            tx.type === 'income' ? 'border-success-500' : 'border-danger-500'
-          }`}
+          className={`bg-white rounded-xl shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow group ${tx.type === 'income' ? 'border-success-500' : 'border-danger-500'
+            }`}
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                tx.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
-              }`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
+                }`}>
                 <span className="text-lg">{tx.type === 'income' ? '📈' : '📉'}</span>
               </div>
               <div>

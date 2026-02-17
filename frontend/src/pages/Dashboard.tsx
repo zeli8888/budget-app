@@ -2,24 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { statsApi, StatsSummary, transactionApi, Transaction } from '../services/api';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-
-const VALID_ISO_CURRENCIES = new Set(Intl.supportedValuesOf('currency'));
-
-const formatAmount = (amount: number, currency: string): string => {
-  const value = amount / 100;
-  const upperCurrency = currency.toUpperCase();
-  if (VALID_ISO_CURRENCIES.has(upperCurrency)) {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: upperCurrency,
-    }).format(value);
-  }
-  return new Intl.NumberFormat('en-US', {
-    style: 'decimal',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
+import { formatAmount } from '../components/utils';
 
 const Dashboard: React.FC = () => {
   const [summary, setSummary] = useState<StatsSummary | null>(null);
