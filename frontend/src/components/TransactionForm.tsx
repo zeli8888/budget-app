@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CreateTransactionInput, Transaction, UpdateTransactionInput } from '../services/api';
+import CreatableSelect from 'react-select/creatable';
 
 interface TransactionFormProps {
   onSubmit: (data: CreateTransactionInput | UpdateTransactionInput) => Promise<void>;
@@ -14,7 +15,11 @@ const CATEGORIES = {
 
 const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Alipay', 'WeChat Pay', 'Other'];
 
+const PAYMENT_OPTIONS = PAYMENT_METHODS.map(p => ({ value: p, label: p }));
+
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'JPY'];
+
+const CURRENCIES_OPTIONS = CURRENCIES.map(c => ({ value: c, label: c }));
 
 const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData, onCancel }) => {
   const [type, setType] = useState<'income' | 'expense'>(initialData?.type || 'expense');
@@ -116,18 +121,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
             required
           />
         </div>
-        <div>
-          <label className="form-label">Currency</label>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="form-input"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
+        <label className="form-label">Currency</label>
+        <CreatableSelect
+          className='form-input'
+          isClearable
+          options={CURRENCIES_OPTIONS}
+          value={CURRENCIES_OPTIONS.find(opt => opt.value === currency) || { value: currency, label: currency }}
+          onChange={(newValue: { value: string, label: string } | null) => setCurrency(newValue ? newValue.value : '')}
+          placeholder="Select or type currency..."
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
