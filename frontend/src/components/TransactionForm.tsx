@@ -19,7 +19,7 @@ const CATEGORIES_OPTIONS = {
   income: CATEGORIES.income.map(c => ({ value: c, label: c })),
 };
 
-const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Alipay', 'WeChat Pay', 'Other'];
+const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Alipay', 'WeChat Pay', 'Revolut', 'Other'];
 
 const PAYMENT_OPTIONS = PAYMENT_METHODS.map(p => ({ value: p, label: p }));
 
@@ -31,8 +31,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
   const [type, setType] = useState<'income' | 'expense'>(initialData?.type || 'expense');
   const [amount, setAmount] = useState(initialData ? (initialData.amount / 100).toString() : '');
   const [currency, setCurrency] = useState(initialData?.currency || 'EUR');
-  const [category, setCategory] = useState(initialData?.category || '');
-  const [paymentMethod, setPaymentMethod] = useState(initialData?.payment_method || 'Cash');
+  const [category, setCategory] = useState(initialData?.category || (type === 'expense' ? 'Food' : 'Salary'));
+  const [paymentMethod, setPaymentMethod] = useState(initialData?.payment_method || 'Revolut');
   const [transactionAt, setTransactionAt] = useState(
     initialData ? initialData.transaction_at.split('T')[0] : new Date().toISOString().split('T')[0]
   );
@@ -149,15 +149,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
         </div>
         <div>
           <label className="form-label">Payment Method</label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="form-input"
-          >
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+          <CreatableSelect
+            isClearable
+            options={PAYMENT_OPTIONS}
+            value={PAYMENT_OPTIONS.find(opt => opt.value === paymentMethod) || (paymentMethod ? { value: paymentMethod, label: paymentMethod } : null)}
+            onChange={(newValue) => setPaymentMethod(newValue ? newValue.value : '')}
+            placeholder="Select..."
+            classNames={creatableSelectStyles}
+          />
         </div>
       </div>
 
