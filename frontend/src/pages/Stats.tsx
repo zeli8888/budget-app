@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -12,6 +12,7 @@ import {
 import { Pie, Bar } from 'react-chartjs-2';
 import { statsApi, StatsSummary, CategoryStat } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { formatAmount } from '../components/utils';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -25,14 +26,6 @@ const COLORS = [
   '#c2185b',
   '#512da8',
 ];
-
-const formatAmount = (amount: number, currency: string): string => {
-  const value = amount / 100;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-  }).format(value);
-};
 
 const Stats: React.FC = () => {
   const [summary, setSummary] = useState<StatsSummary | null>(null);
@@ -79,16 +72,31 @@ const Stats: React.FC = () => {
     }
   };
 
-  const pieData = {
-    labels: categoryStats.map((s) => s.category),
-    datasets: [
-      {
-        data: categoryStats.map((s) => s.total / 100),
-        backgroundColor: COLORS.slice(0, categoryStats.length),
-        borderWidth: 0,
-      },
-    ],
-  };
+  const pieData = useMemo(() => {
+    const MAX_COLORS = COLORS.length;
+    const needsGrouping = categoryStats.length > MAX_COLORS;
+
+    const displayStats = needsGrouping
+      ? [
+        ...categoryStats.slice(0, MAX_COLORS - 1),
+        {
+          category: 'Other',
+          total: categoryStats.slice(MAX_COLORS - 1).reduce((sum, s) => sum + s.total, 0)
+        }
+      ]
+      : categoryStats;
+
+    return {
+      labels: displayStats.map((s) => s.category),
+      datasets: [
+        {
+          data: displayStats.map((s) => s.total / 100),
+          backgroundColor: COLORS.slice(0, displayStats.length),
+          borderWidth: 0,
+        },
+      ],
+    };
+  }, [categoryStats]);
 
   const barData = {
     labels: categoryStats.map((s) => s.category),
@@ -179,21 +187,19 @@ const Stats: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900">Category Breakdown</h2>
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                statsType === 'expense'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${statsType === 'expense'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+                }`}
               onClick={() => setStatsType('expense')}
             >
               Expenses
             </button>
             <button
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                statsType === 'income'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${statsType === 'income'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+                }`}
               onClick={() => setStatsType('income')}
             >
               Income
