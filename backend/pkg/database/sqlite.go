@@ -34,6 +34,7 @@ func NewSQLiteDB(dbPath string) (*sql.DB, error) {
 
 func RunMigrations(db *sql.DB) error {
 	migrations := []string{
+		// 1. Transactions Table (Existing)
 		`CREATE TABLE IF NOT EXISTS transactions (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_id TEXT NOT NULL,
@@ -45,10 +46,44 @@ func RunMigrations(db *sql.DB) error {
 			transaction_at DATETIME NOT NULL,
 			metadata JSON DEFAULT '{}'
 		)`,
+
+		// 2. Custom Categories
+		`CREATE TABLE IF NOT EXISTS categories (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
+			UNIQUE(user_id, name, type)
+		)`,
+
+		// 3. Custom Currencies
+		`CREATE TABLE IF NOT EXISTS currencies (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id TEXT NOT NULL,
+			code TEXT NOT NULL,
+			UNIQUE(user_id, code)
+		)`,
+
+		// 4. Accounts & Savings (Tracks balances per payment_method + currency)
+		`CREATE TABLE IF NOT EXISTS accounts (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			currency TEXT NOT NULL,
+			balance INTEGER DEFAULT 0,
+			UNIQUE(user_id, name, currency)
+		)`,
+
+		// Performance Indexes for Transactions
 		`CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, transaction_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_user_type ON transactions(user_id, type)`,
 		`CREATE INDEX IF NOT EXISTS idx_transactions_user_category ON transactions(user_id, category)`,
+
+		// Performance Indexes for User Preferences (Queried often)
+		`CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_currencies_user ON currencies(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_accounts_user ON accounts(user_id)`,
 	}
 
 	for _, migration := range migrations {
