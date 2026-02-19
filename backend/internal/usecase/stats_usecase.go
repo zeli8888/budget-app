@@ -15,10 +15,10 @@ func NewStatsUsecase(repo domain.TransactionRepository) *StatsUsecase {
 	return &StatsUsecase{repo: repo}
 }
 
-func (u *StatsUsecase) GetSummary(ctx context.Context, userID string, startDate, endDate time.Time) (*domain.StatsSummary, error) {
+func (u *StatsUsecase) GetSummary(ctx context.Context, userID string, startDate, endDate time.Time) ([]*domain.StatsSummary, error) {
 	return u.repo.GetSummary(ctx, userID, startDate, endDate)
 }
 
-func (u *StatsUsecase) GetCategoryBreakdown(ctx context.Context, userID string, startDate, endDate time.Time, txType domain.TransactionType) ([]*domain.CategoryStat, error) {
+func (u *StatsUsecase) GetCategoryBreakdown(ctx context.Context, userID string, startDate, endDate time.Time, txType domain.TransactionType) (map[string][]*domain.CategoryStat, error) {
 	return u.repo.GetCategoryBreakdown(ctx, userID, startDate, endDate, txType)
 }

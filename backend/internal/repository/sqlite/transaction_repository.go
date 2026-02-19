@@ -346,36 +346,55 @@ func (r *TransactionRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *TransactionRepository) GetSummary(ctx context.Context, userID string, startDate, endDate time.Time) (*domain.StatsSummary, error) {
+func (r *TransactionRepository) GetSummary(ctx context.Context, userID string, startDate, endDate time.Time) ([]*domain.StatsSummary, error) {
 	query := `
 		SELECT 
+			currency,
 			COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
 			COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
 		FROM transactions
 		WHERE user_id = ? AND transaction_at >= ? AND transaction_at <= ?
+		GROUP BY currency
 	`
 
-	summary := &domain.StatsSummary{Currency: "EUR"}
-
-	err := r.db.QueryRowContext(ctx, query, userID, startDate, endDate).Scan(
-		&summary.TotalIncome,
-		&summary.TotalExpense,
-	)
+	rows, err := r.db.QueryContext(ctx, query, userID, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	summary.NetBalance = summary.TotalIncome - summary.TotalExpense
-	return summary, nil
+	var summaries []*domain.StatsSummary
+
+	for rows.Next() {
+		summary := &domain.StatsSummary{}
+
+		err := rows.Scan(
+			&summary.Currency,
+			&summary.TotalIncome,
+			&summary.TotalExpense,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		summary.NetBalance = summary.TotalIncome - summary.TotalExpense
+		summaries = append(summaries, summary)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return summaries, nil
 }
 
-func (r *TransactionRepository) GetCategoryBreakdown(ctx context.Context, userID string, startDate, endDate time.Time, txType domain.TransactionType) ([]*domain.CategoryStat, error) {
+func (r *TransactionRepository) GetCategoryBreakdown(ctx context.Context, userID string, startDate, endDate time.Time, txType domain.TransactionType) (map[string][]*domain.CategoryStat, error) {
 	query := `
-		SELECT category, SUM(amount) as total, COUNT(*) as count
+		SELECT currency, category, SUM(amount) as total, COUNT(*) as count
 		FROM transactions
 		WHERE user_id = ? AND type = ? AND transaction_at >= ? AND transaction_at <= ?
-		GROUP BY category
-		ORDER BY total DESC
+		GROUP BY currency, category
+		ORDER BY currency ASC, total DESC
 	`
 
 	rows, err := r.db.QueryContext(ctx, query, userID, txType, startDate, endDate)
@@ -384,25 +403,36 @@ func (r *TransactionRepository) GetCategoryBreakdown(ctx context.Context, userID
 	}
 	defer rows.Close()
 
-	var stats []*domain.CategoryStat
-	var grandTotal int64
+	statsMap := make(map[string][]*domain.CategoryStat)
+	grandTotals := make(map[string]int64)
 
 	for rows.Next() {
 		stat := &domain.CategoryStat{}
-		err := rows.Scan(&stat.Category, &stat.Total, &stat.Count)
+		var currencyKey string
+
+		err := rows.Scan(&currencyKey, &stat.Category, &stat.Total, &stat.Count)
 		if err != nil {
 			return nil, err
 		}
-		grandTotal += stat.Total
-		stats = append(stats, stat)
+
+		statsMap[currencyKey] = append(statsMap[currencyKey], stat)
+
+		grandTotals[currencyKey] += stat.Total
 	}
 
-	// Calculate percentages
-	for _, stat := range stats {
-		if grandTotal > 0 {
-			stat.Percentage = float64(stat.Total) / float64(grandTotal) * 100
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for currency, stats := range statsMap {
+		totalForCurrency := grandTotals[currency]
+
+		if totalForCurrency > 0 {
+			for _, stat := range stats {
+				stat.Percentage = float64(stat.Total) / float64(totalForCurrency) * 100
+			}
 		}
 	}
 
-	return stats, nil
+	return statsMap, nil
 }
