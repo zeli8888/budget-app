@@ -10,4 +10,8 @@ var (
 	ErrInvalidType        = errors.New("type must be 'income' or 'expense'")
 	ErrInvalidDate        = errors.New("invalid date format")
 	ErrOwnershipViolation = errors.New("you do not own this resource")
+	ErrDuplicateEntry     = errors.New("duplicate entry")
+	ErrInvalidCurrency    = errors.New("invalid currency code")
+	ErrInvalidCategory    = errors.New("invalid category name")
+	ErrInvalidAccount     = errors.New("invalid account name")
 )

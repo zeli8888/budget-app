@@ -18,6 +18,7 @@ func NewStatsHandler(usecase *usecase.StatsUsecase) *StatsHandler {
 }
 
 func (h *StatsHandler) GetSummary(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := c.Get("user_id").(string)
 
 	// Default to current month
@@ -40,7 +41,7 @@ func (h *StatsHandler) GetSummary(c echo.Context) error {
 		}
 	}
 
-	summary, err := h.usecase.GetSummary(userID, startDate, endDate)
+	summary, err := h.usecase.GetSummary(ctx, userID, startDate, endDate)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "failed to get summary",
@@ -51,6 +52,7 @@ func (h *StatsHandler) GetSummary(c echo.Context) error {
 }
 
 func (h *StatsHandler) GetCategoryBreakdown(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := c.Get("user_id").(string)
 
 	// Default to current month
@@ -82,7 +84,7 @@ func (h *StatsHandler) GetCategoryBreakdown(c echo.Context) error {
 		}
 	}
 
-	stats, err := h.usecase.GetCategoryBreakdown(userID, startDate, endDate, txType)
+	stats, err := h.usecase.GetCategoryBreakdown(ctx, userID, startDate, endDate, txType)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "failed to get category breakdown",

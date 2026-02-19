@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -18,7 +19,7 @@ func NewTransactionRepository(db *sql.DB) *TransactionRepository {
 	return &TransactionRepository{db: db}
 }
 
-func (r *TransactionRepository) Create(tx *domain.Transaction) error {
+func (r *TransactionRepository) Create(ctx context.Context, tx *domain.Transaction) error {
 	query := `
 		INSERT INTO transactions (user_id, amount, currency, type, category, payment_method, transaction_at, metadata)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -29,7 +30,7 @@ func (r *TransactionRepository) Create(tx *domain.Transaction) error {
 		metadataJSON = []byte("{}")
 	}
 
-	result, err := r.db.Exec(query,
+	result, err := r.db.ExecContext(ctx, query,
 		tx.UserID,
 		tx.Amount,
 		tx.Currency,
@@ -52,7 +53,131 @@ func (r *TransactionRepository) Create(tx *domain.Transaction) error {
 	return nil
 }
 
-func (r *TransactionRepository) GetByID(id int64) (*domain.Transaction, error) {
+func (r *TransactionRepository) CreateTransactional(ctx context.Context, tx *domain.Transaction) error {
+	dbTx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer dbTx.Rollback()
+
+	// 1. Check if category exists, create if not
+	var categoryExists bool
+	err = dbTx.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM categories WHERE user_id = ? AND name = ? AND type = ?)`,
+		tx.UserID, tx.Category, tx.Type,
+	).Scan(&categoryExists)
+	if err != nil {
+		return err
+	}
+
+	if !categoryExists {
+		_, err = dbTx.ExecContext(ctx,
+			`INSERT INTO categories (user_id, name, type) VALUES (?, ?, ?)`,
+			tx.UserID, tx.Category, tx.Type,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 2. Check if currency exists, create if not
+	var currencyExists bool
+	err = dbTx.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM currencies WHERE user_id = ? AND code = ?)`,
+		tx.UserID, tx.Currency,
+	).Scan(&currencyExists)
+	if err != nil {
+		return err
+	}
+
+	if !currencyExists {
+		_, err = dbTx.ExecContext(ctx,
+			`INSERT INTO currencies (user_id, code) VALUES (?, ?)`,
+			tx.UserID, tx.Currency,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 3. Check if account exists, create if not, or update balance
+	var accountID int64
+	var accountBalance int64
+	err = dbTx.QueryRowContext(ctx,
+		`SELECT id, balance FROM accounts WHERE user_id = ? AND name = ? AND currency = ?`,
+		tx.UserID, tx.PaymentMethod, tx.Currency,
+	).Scan(&accountID, &accountBalance)
+
+	if err == sql.ErrNoRows {
+		// Account doesn't exist, create it with initial balance based on transaction type
+		var initialBalance int64
+		if tx.Type == domain.TransactionTypeIncome {
+			initialBalance = tx.Amount
+		} else {
+			initialBalance = -tx.Amount
+		}
+
+		result, err := dbTx.ExecContext(ctx,
+			`INSERT INTO accounts (user_id, name, currency, balance) VALUES (?, ?, ?, ?)`,
+			tx.UserID, tx.PaymentMethod, tx.Currency, initialBalance,
+		)
+		if err != nil {
+			return err
+		}
+		accountID, _ = result.LastInsertId()
+	} else if err != nil {
+		return err
+	} else {
+		// Account exists, update balance
+		var newBalance int64
+		if tx.Type == domain.TransactionTypeIncome {
+			newBalance = accountBalance + tx.Amount
+		} else {
+			newBalance = accountBalance - tx.Amount
+		}
+
+		_, err = dbTx.ExecContext(ctx,
+			`UPDATE accounts SET balance = ? WHERE id = ?`,
+			newBalance, accountID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 4. Create the transaction
+	metadataJSON, err := json.Marshal(tx.Metadata)
+	if err != nil {
+		metadataJSON = []byte("{}")
+	}
+
+	result, err := dbTx.ExecContext(ctx,
+		`INSERT INTO transactions (user_id, amount, currency, type, category, payment_method, transaction_at, metadata)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		tx.UserID,
+		tx.Amount,
+		tx.Currency,
+		tx.Type,
+		tx.Category,
+		tx.PaymentMethod,
+		tx.TransactionAt,
+		string(metadataJSON),
+	)
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	tx.ID = id
+
+	return dbTx.Commit()
+}
+
+func (r *TransactionRepository) GetByID(ctx context.Context, id int64) (*domain.Transaction, error) {
 	query := `
 		SELECT id, user_id, amount, currency, type, category, payment_method, transaction_at, metadata
 		FROM transactions
@@ -62,7 +187,7 @@ func (r *TransactionRepository) GetByID(id int64) (*domain.Transaction, error) {
 	tx := &domain.Transaction{}
 	var metadataStr string
 
-	err := r.db.QueryRow(query, id).Scan(
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&tx.ID,
 		&tx.UserID,
 		&tx.Amount,
@@ -84,7 +209,7 @@ func (r *TransactionRepository) GetByID(id int64) (*domain.Transaction, error) {
 	return tx, nil
 }
 
-func (r *TransactionRepository) GetByUserID(filter domain.TransactionFilter) ([]*domain.Transaction, error) {
+func (r *TransactionRepository) GetByUserID(ctx context.Context, filter domain.TransactionFilter) ([]*domain.Transaction, error) {
 	var conditions []string
 	var args []interface{}
 
@@ -130,7 +255,7 @@ func (r *TransactionRepository) GetByUserID(filter domain.TransactionFilter) ([]
 	}
 	args = append(args, limit)
 
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +288,7 @@ func (r *TransactionRepository) GetByUserID(filter domain.TransactionFilter) ([]
 	return transactions, nil
 }
 
-func (r *TransactionRepository) Update(tx *domain.Transaction) error {
+func (r *TransactionRepository) Update(ctx context.Context, tx *domain.Transaction) error {
 	query := `
 		UPDATE transactions
 		SET amount = ?, currency = ?, type = ?, category = ?, payment_method = ?, transaction_at = ?, metadata = ?
@@ -175,7 +300,7 @@ func (r *TransactionRepository) Update(tx *domain.Transaction) error {
 		metadataJSON = []byte("{}")
 	}
 
-	result, err := r.db.Exec(query,
+	result, err := r.db.ExecContext(ctx, query,
 		tx.Amount,
 		tx.Currency,
 		tx.Type,
@@ -201,10 +326,10 @@ func (r *TransactionRepository) Update(tx *domain.Transaction) error {
 	return nil
 }
 
-func (r *TransactionRepository) Delete(id int64) error {
+func (r *TransactionRepository) Delete(ctx context.Context, id int64) error {
 	query := `DELETE FROM transactions WHERE id = ?`
 
-	result, err := r.db.Exec(query, id)
+	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
@@ -221,7 +346,7 @@ func (r *TransactionRepository) Delete(id int64) error {
 	return nil
 }
 
-func (r *TransactionRepository) GetSummary(userID string, startDate, endDate time.Time) (*domain.StatsSummary, error) {
+func (r *TransactionRepository) GetSummary(ctx context.Context, userID string, startDate, endDate time.Time) (*domain.StatsSummary, error) {
 	query := `
 		SELECT 
 			COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
@@ -232,7 +357,7 @@ func (r *TransactionRepository) GetSummary(userID string, startDate, endDate tim
 
 	summary := &domain.StatsSummary{Currency: "EUR"}
 
-	err := r.db.QueryRow(query, userID, startDate, endDate).Scan(
+	err := r.db.QueryRowContext(ctx, query, userID, startDate, endDate).Scan(
 		&summary.TotalIncome,
 		&summary.TotalExpense,
 	)
@@ -244,7 +369,7 @@ func (r *TransactionRepository) GetSummary(userID string, startDate, endDate tim
 	return summary, nil
 }
 
-func (r *TransactionRepository) GetCategoryBreakdown(userID string, startDate, endDate time.Time, txType domain.TransactionType) ([]*domain.CategoryStat, error) {
+func (r *TransactionRepository) GetCategoryBreakdown(ctx context.Context, userID string, startDate, endDate time.Time, txType domain.TransactionType) ([]*domain.CategoryStat, error) {
 	query := `
 		SELECT category, SUM(amount) as total, COUNT(*) as count
 		FROM transactions
@@ -253,7 +378,7 @@ func (r *TransactionRepository) GetCategoryBreakdown(userID string, startDate, e
 		ORDER BY total DESC
 	`
 
-	rows, err := r.db.Query(query, userID, txType, startDate, endDate)
+	rows, err := r.db.QueryContext(ctx, query, userID, txType, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}

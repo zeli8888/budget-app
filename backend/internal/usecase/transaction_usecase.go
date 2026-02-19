@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
@@ -36,7 +37,7 @@ type UpdateTransactionInput struct {
 	Metadata      *json.RawMessage `json:"metadata"`
 }
 
-func (u *TransactionUsecase) Create(userID string, input CreateTransactionInput) (*domain.Transaction, error) {
+func (u *TransactionUsecase) Create(ctx context.Context, userID string, input CreateTransactionInput) (*domain.Transaction, error) {
 	// Validate amount
 	if input.Amount <= 0 {
 		return nil, domain.ErrInvalidAmount
@@ -84,15 +85,15 @@ func (u *TransactionUsecase) Create(userID string, input CreateTransactionInput)
 		Metadata:      input.Metadata,
 	}
 
-	if err := u.repo.Create(tx); err != nil {
+	if err := u.repo.CreateTransactional(ctx, tx); err != nil {
 		return nil, err
 	}
 
 	return tx, nil
 }
 
-func (u *TransactionUsecase) GetByID(userID string, id int64) (*domain.Transaction, error) {
-	tx, err := u.repo.GetByID(id)
+func (u *TransactionUsecase) GetByID(ctx context.Context, userID string, id int64) (*domain.Transaction, error) {
+	tx, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -105,13 +106,13 @@ func (u *TransactionUsecase) GetByID(userID string, id int64) (*domain.Transacti
 	return tx, nil
 }
 
-func (u *TransactionUsecase) List(filter domain.TransactionFilter) ([]*domain.Transaction, error) {
-	return u.repo.GetByUserID(filter)
+func (u *TransactionUsecase) List(ctx context.Context, filter domain.TransactionFilter) ([]*domain.Transaction, error) {
+	return u.repo.GetByUserID(ctx, filter)
 }
 
-func (u *TransactionUsecase) Update(userID string, id int64, input UpdateTransactionInput) (*domain.Transaction, error) {
+func (u *TransactionUsecase) Update(ctx context.Context, userID string, id int64, input UpdateTransactionInput) (*domain.Transaction, error) {
 	// Get existing transaction
-	tx, err := u.repo.GetByID(id)
+	tx, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -164,16 +165,16 @@ func (u *TransactionUsecase) Update(userID string, id int64, input UpdateTransac
 		tx.Metadata = *input.Metadata
 	}
 
-	if err := u.repo.Update(tx); err != nil {
+	if err := u.repo.Update(ctx, tx); err != nil {
 		return nil, err
 	}
 
 	return tx, nil
 }
 
-func (u *TransactionUsecase) Delete(userID string, id int64) error {
+func (u *TransactionUsecase) Delete(ctx context.Context, userID string, id int64) error {
 	// Get existing transaction
-	tx, err := u.repo.GetByID(id)
+	tx, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -183,5 +184,5 @@ func (u *TransactionUsecase) Delete(userID string, id int64) error {
 		return domain.ErrOwnershipViolation
 	}
 
-	return u.repo.Delete(id)
+	return u.repo.Delete(ctx, id)
 }

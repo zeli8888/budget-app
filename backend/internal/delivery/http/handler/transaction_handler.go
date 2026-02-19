@@ -19,6 +19,7 @@ func NewTransactionHandler(usecase *usecase.TransactionUsecase) *TransactionHand
 }
 
 func (h *TransactionHandler) Create(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := c.Get("user_id").(string)
 
 	var input usecase.CreateTransactionInput
@@ -28,7 +29,7 @@ func (h *TransactionHandler) Create(c echo.Context) error {
 		})
 	}
 
-	tx, err := h.usecase.Create(userID, input)
+	tx, err := h.usecase.Create(ctx, userID, input)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -37,6 +38,7 @@ func (h *TransactionHandler) Create(c echo.Context) error {
 }
 
 func (h *TransactionHandler) Get(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := c.Get("user_id").(string)
 
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -46,7 +48,7 @@ func (h *TransactionHandler) Get(c echo.Context) error {
 		})
 	}
 
-	tx, err := h.usecase.GetByID(userID, id)
+	tx, err := h.usecase.GetByID(ctx, userID, id)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -55,6 +57,7 @@ func (h *TransactionHandler) Get(c echo.Context) error {
 }
 
 func (h *TransactionHandler) List(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := c.Get("user_id").(string)
 
 	filter := domain.TransactionFilter{
@@ -101,7 +104,7 @@ func (h *TransactionHandler) List(c echo.Context) error {
 		}
 	}
 
-	transactions, err := h.usecase.List(filter)
+	transactions, err := h.usecase.List(ctx, filter)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -120,6 +123,7 @@ func (h *TransactionHandler) List(c echo.Context) error {
 }
 
 func (h *TransactionHandler) Update(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := c.Get("user_id").(string)
 
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -136,7 +140,7 @@ func (h *TransactionHandler) Update(c echo.Context) error {
 		})
 	}
 
-	tx, err := h.usecase.Update(userID, id, input)
+	tx, err := h.usecase.Update(ctx, userID, id, input)
 	if err != nil {
 		return handleError(c, err)
 	}
@@ -145,6 +149,7 @@ func (h *TransactionHandler) Update(c echo.Context) error {
 }
 
 func (h *TransactionHandler) Delete(c echo.Context) error {
+	ctx := c.Request().Context()
 	userID := c.Get("user_id").(string)
 
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -154,7 +159,7 @@ func (h *TransactionHandler) Delete(c echo.Context) error {
 		})
 	}
 
-	if err := h.usecase.Delete(userID, id); err != nil {
+	if err := h.usecase.Delete(ctx, userID, id); err != nil {
 		return handleError(c, err)
 	}
 
@@ -165,7 +170,7 @@ func handleError(c echo.Context, err error) error {
 	switch err {
 	case domain.ErrNotFound:
 		return c.JSON(http.StatusNotFound, map[string]string{
-			"error": "transaction not found",
+			"error": "resource not found",
 		})
 	case domain.ErrOwnershipViolation:
 		return c.JSON(http.StatusForbidden, map[string]string{
@@ -182,6 +187,22 @@ func handleError(c echo.Context, err error) error {
 	case domain.ErrInvalidDate:
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "invalid date format, use RFC3339 or YYYY-MM-DD",
+		})
+	case domain.ErrDuplicateEntry:
+		return c.JSON(http.StatusConflict, map[string]string{
+			"error": "duplicate entry",
+		})
+	case domain.ErrInvalidCurrency:
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid currency code",
+		})
+	case domain.ErrInvalidCategory:
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid category name",
+		})
+	case domain.ErrInvalidAccount:
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid account name",
 		})
 	default:
 		return c.JSON(http.StatusInternalServerError, map[string]string{

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 )
@@ -35,11 +36,12 @@ type TransactionFilter struct {
 }
 
 type TransactionRepository interface {
-	Create(tx *Transaction) error
-	GetByID(id int64) (*Transaction, error)
-	GetByUserID(filter TransactionFilter) ([]*Transaction, error)
-	Update(tx *Transaction) error
-	Delete(id int64) error
-	GetSummary(userID string, startDate, endDate time.Time) (*StatsSummary, error)
-	GetCategoryBreakdown(userID string, startDate, endDate time.Time, txType TransactionType) ([]*CategoryStat, error)
+	Create(ctx context.Context, tx *Transaction) error
+	GetByID(ctx context.Context, id int64) (*Transaction, error)
+	GetByUserID(ctx context.Context, filter TransactionFilter) ([]*Transaction, error)
+	Update(ctx context.Context, tx *Transaction) error
+	Delete(ctx context.Context, id int64) error
+	GetSummary(ctx context.Context, userID string, startDate, endDate time.Time) (*StatsSummary, error)
+	GetCategoryBreakdown(ctx context.Context, userID string, startDate, endDate time.Time, txType TransactionType) ([]*CategoryStat, error)
+	CreateTransactional(ctx context.Context, tx *Transaction) error
 }

@@ -48,10 +48,16 @@ func main() {
 
 	// Initialize repositories
 	transactionRepo := sqlite.NewTransactionRepository(db)
+	categoryRepo := sqlite.NewCategoryRepository(db)
+	currencyRepo := sqlite.NewCurrencyRepository(db)
+	accountRepo := sqlite.NewAccountRepository(db)
 
 	// Initialize usecases
 	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo)
 	statsUsecase := usecase.NewStatsUsecase(transactionRepo)
+	categoryUsecase := usecase.NewCategoryUsecase(categoryRepo)
+	currencyUsecase := usecase.NewCurrencyUsecase(currencyRepo)
+	accountUsecase := usecase.NewAccountUsecase(accountRepo)
 
 	// Initialize Echo
 	e := echo.New()
@@ -86,6 +92,9 @@ func main() {
 	// Initialize handlers
 	transactionHandler := handler.NewTransactionHandler(transactionUsecase)
 	statsHandler := handler.NewStatsHandler(statsUsecase)
+	categoryHandler := handler.NewCategoryHandler(categoryUsecase)
+	currencyHandler := handler.NewCurrencyHandler(currencyUsecase)
+	accountHandler := handler.NewAccountHandler(accountUsecase)
 
 	// Transaction routes
 	protected.POST("/transactions", transactionHandler.Create)
@@ -97,6 +106,27 @@ func main() {
 	// Stats routes
 	protected.GET("/stats/summary", statsHandler.GetSummary)
 	protected.GET("/stats/category", statsHandler.GetCategoryBreakdown)
+
+	// Category routes
+	protected.POST("/categories", categoryHandler.Create)
+	protected.GET("/categories", categoryHandler.List)
+	protected.GET("/categories/:id", categoryHandler.Get)
+	protected.PUT("/categories/:id", categoryHandler.Update)
+	protected.DELETE("/categories/:id", categoryHandler.Delete)
+
+	// Currency routes
+	protected.POST("/currencies", currencyHandler.Create)
+	protected.GET("/currencies", currencyHandler.List)
+	protected.GET("/currencies/:id", currencyHandler.Get)
+	protected.PUT("/currencies/:id", currencyHandler.Update)
+	protected.DELETE("/currencies/:id", currencyHandler.Delete)
+
+	// Account routes
+	protected.POST("/accounts", accountHandler.Create)
+	protected.GET("/accounts", accountHandler.List)
+	protected.GET("/accounts/:id", accountHandler.Get)
+	protected.PUT("/accounts/:id", accountHandler.Update)
+	protected.DELETE("/accounts/:id", accountHandler.Delete)
 
 	// Start server
 	go func() {
