@@ -40,6 +40,26 @@ func (r *AccountRepository) Create(ctx context.Context, account *domain.Account)
 	return nil
 }
 
+func (r *AccountRepository) ensureCurrency(ctx context.Context, tx *sql.Tx, userID string, currency string) error {
+	var exists bool
+	err := tx.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM currencies WHERE user_id = ? AND code = ?)`,
+		userID, currency,
+	).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		_, err = tx.ExecContext(ctx,
+			`INSERT INTO currencies (user_id, code) VALUES (?, ?)`,
+			userID, currency,
+		)
+		return err
+	}
+	return nil
+}
+
 func (r *AccountRepository) CreateTransactional(ctx context.Context, account *domain.Account) error {
 	dbTx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -48,23 +68,8 @@ func (r *AccountRepository) CreateTransactional(ctx context.Context, account *do
 	defer dbTx.Rollback()
 
 	// 1. Check if currency exists, create if not
-	var currencyExists bool
-	err = dbTx.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM currencies WHERE user_id = ? AND code = ?)`,
-		account.UserID, account.Currency,
-	).Scan(&currencyExists)
-	if err != nil {
+	if err := r.ensureCurrency(ctx, dbTx, account.UserID, account.Currency); err != nil {
 		return err
-	}
-
-	if !currencyExists {
-		_, err = dbTx.ExecContext(ctx,
-			`INSERT INTO currencies (user_id, code) VALUES (?, ?)`,
-			account.UserID, account.Currency,
-		)
-		if err != nil {
-			return err
-		}
 	}
 
 	// 2. Create the account
@@ -87,6 +92,46 @@ func (r *AccountRepository) CreateTransactional(ctx context.Context, account *do
 	account.ID = id
 
 	return dbTx.Commit()
+}
+
+func (r *AccountRepository) Update(ctx context.Context, account *domain.Account) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// 1. Ensure currency exists using the helper
+	if err := r.ensureCurrency(ctx, tx, account.UserID, account.Currency); err != nil {
+		return err
+	}
+
+	// 2. Perform the update
+	query := `
+		UPDATE accounts
+		SET name = ?, currency = ?, balance = ?
+		WHERE id = ?
+	`
+	result, err := tx.ExecContext(ctx, query,
+		account.Name,
+		account.Currency,
+		account.Balance,
+		account.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+
+	return tx.Commit()
 }
 
 func (r *AccountRepository) GetByID(ctx context.Context, id int64) (*domain.Account, error) {
@@ -203,35 +248,6 @@ func (r *AccountRepository) GetByUserIDNameAndCurrency(ctx context.Context, user
 	}
 
 	return account, nil
-}
-
-func (r *AccountRepository) Update(ctx context.Context, account *domain.Account) error {
-	query := `
-		UPDATE accounts
-		SET name = ?, currency = ?, balance = ?
-		WHERE id = ?
-	`
-
-	result, err := r.db.ExecContext(ctx, query,
-		account.Name,
-		account.Currency,
-		account.Balance,
-		account.ID,
-	)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
 }
 
 func (r *AccountRepository) Delete(ctx context.Context, id int64) error {
