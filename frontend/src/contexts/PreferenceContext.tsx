@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { currencyApi, categoryApi, accountApi } from '../services/api';
 
-const DEFAULT_CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'JPY'];
+const DEFAULT_CURRENCIES = ['EUR', 'USD', 'CNY'];
 
 const DEFAULT_CATEGORIES = {
     expense: ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Education', 'Other'],
