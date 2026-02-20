@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   transactionApi,
   Transaction,
@@ -17,11 +17,27 @@ const Transactions: React.FC = () => {
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Filter States
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [currencyFilter, setCurrencyFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('');
 
   const { currencyOptions, categoryOptions, paymentOptions, loadPreferences } = usePreference();
+
+  // Helper to determine which categories to show in the filter
+  const activeCategoryOptions = useMemo(() => {
+    if (typeFilter === 'income') return categoryOptions.income;
+    if (typeFilter === 'expense') return categoryOptions.expense;
+
+    // If "All", merge and deduplicate by label/value
+    const all = [...categoryOptions.income, ...categoryOptions.expense];
+    // Since value and label are the same, we filter the array to unique values
+    const uniqueValues = Array.from(new Set(all.map(opt => opt.value)));
+    return uniqueValues.map(val => ({ value: val, label: val }));
+  }, [typeFilter, categoryOptions]);
 
   const fetchTransactions = useCallback(async (cursor?: number) => {
     try {
@@ -29,6 +45,9 @@ const Transactions: React.FC = () => {
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
       if (typeFilter) params.type = typeFilter;
+      if (currencyFilter) params.currency = currencyFilter;
+      if (categoryFilter) params.category = categoryFilter;
+      if (paymentFilter) params.payment_method = paymentFilter;
       if (cursor) params.cursor = cursor;
 
       const response = await transactionApi.list(params);
@@ -42,7 +61,7 @@ const Transactions: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
     }
-  }, [startDate, endDate, typeFilter]);
+  }, [startDate, endDate, typeFilter, currencyFilter, categoryFilter, paymentFilter]);
 
   useEffect(() => {
     setLoading(true);
@@ -92,6 +111,15 @@ const Transactions: React.FC = () => {
     setEditingTransaction(null);
   };
 
+  const clearFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    setTypeFilter('');
+    setCurrencyFilter('');
+    setCategoryFilter('');
+    setPaymentFilter('');
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -122,8 +150,8 @@ const Transactions: React.FC = () => {
       {(!showForm && !editingTransaction) && (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl shadow-md p-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex-1 w-full sm:w-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
                 <label className="form-label">Start Date</label>
                 <input
                   type="date"
@@ -132,7 +160,7 @@ const Transactions: React.FC = () => {
                   className="form-input"
                 />
               </div>
-              <div className="flex-1 w-full sm:w-auto">
+              <div>
                 <label className="form-label">End Date</label>
                 <input
                   type="date"
@@ -141,27 +169,74 @@ const Transactions: React.FC = () => {
                   className="form-input"
                 />
               </div>
-              <div className="flex-1 w-full sm:w-auto">
+
+              <div>
                 <label className="form-label">Type</label>
                 <select
                   value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
+                  onChange={(e) => {
+                    setTypeFilter(e.target.value);
+                    setCategoryFilter(''); // Reset category when type changes
+                  }}
                   className="form-input"
                 >
-                  <option value="">All</option>
+                  <option value="">All Types</option>
                   <option value="income">Income</option>
                   <option value="expense">Expense</option>
                 </select>
               </div>
+
+              <div>
+                <label className="form-label">Currency</label>
+                <select
+                  value={currencyFilter}
+                  onChange={(e) => setCurrencyFilter(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="">All Currencies</option>
+                  {currencyOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="form-label">Category</label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="">All Categories</option>
+                  {activeCategoryOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="form-label">Payment Method</label>
+                <select
+                  value={paymentFilter}
+                  onChange={(e) => setPaymentFilter(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="">All Methods</option>
+                  {paymentOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
               <button
-                className="btn btn-outline w-full sm:w-auto"
-                onClick={() => {
-                  setStartDate('');
-                  setEndDate('');
-                  setTypeFilter('');
-                }}
+                className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                onClick={clearFilters}
               >
-                Clear Filters
+                Clear All Filters
               </button>
             </div>
           </div>
@@ -196,8 +271,6 @@ const Transactions: React.FC = () => {
           )}
         </div>
       )}
-
-
     </div>
   );
 };
