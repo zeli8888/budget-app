@@ -45,5 +45,4 @@ type TransactionRepository interface {
 	Delete(ctx context.Context, id int64) error
 	GetSummary(ctx context.Context, userID string, startDate, endDate time.Time) ([]*StatsSummary, error)
 	GetCategoryBreakdown(ctx context.Context, userID string, startDate, endDate time.Time, txType TransactionType) (map[string][]*CategoryStat, error)
-	CreateTransactional(ctx context.Context, tx *Transaction) error
 }

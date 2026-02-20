@@ -85,7 +85,7 @@ func (u *TransactionUsecase) Create(ctx context.Context, userID string, input Cr
 		Metadata:      input.Metadata,
 	}
 
-	if err := u.repo.CreateTransactional(ctx, tx); err != nil {
+	if err := u.repo.Create(ctx, tx); err != nil {
 		return nil, err
 	}
 

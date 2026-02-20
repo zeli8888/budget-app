@@ -20,40 +20,6 @@ func NewTransactionRepository(db *sql.DB) *TransactionRepository {
 }
 
 func (r *TransactionRepository) Create(ctx context.Context, tx *domain.Transaction) error {
-	query := `
-		INSERT INTO transactions (user_id, amount, currency, type, category, payment_method, transaction_at, metadata)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`
-
-	metadataJSON, err := json.Marshal(tx.Metadata)
-	if err != nil {
-		metadataJSON = []byte("{}")
-	}
-
-	result, err := r.db.ExecContext(ctx, query,
-		tx.UserID,
-		tx.Amount,
-		tx.Currency,
-		tx.Type,
-		tx.Category,
-		tx.PaymentMethod,
-		tx.TransactionAt,
-		string(metadataJSON),
-	)
-	if err != nil {
-		return err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	tx.ID = id
-	return nil
-}
-
-func (r *TransactionRepository) CreateTransactional(ctx context.Context, tx *domain.Transaction) error {
 	dbTx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
