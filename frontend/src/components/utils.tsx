@@ -9,11 +9,11 @@ export const formatAmount = (amount: number, currency: string): string => {
       currency: upperCurrency,
     }).format(value);
   }
-  return new Intl.NumberFormat('en-US', {
+  return upperCurrency + ' ' + new Intl.NumberFormat('en-US', {
     style: 'decimal',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value) + ' ' + upperCurrency;
+  }).format(value);
 };
 
 export const creatableSelectStyles = {
