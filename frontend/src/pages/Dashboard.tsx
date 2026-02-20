@@ -1,13 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { statsApi, StatsSummary, transactionApi, Transaction } from '../services/api';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { formatAmount } from '../components/utils';
+import { usePreference } from '../contexts/PreferenceContext';
 
 const Dashboard: React.FC = () => {
-  const [summary, setSummary] = useState<StatsSummary | null>(null);
+  const [statsSummary, setStatsSummary] = useState<StatsSummary[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const { currency } = usePreference();
+  const summary = useMemo(() => {
+    if (!statsSummary || statsSummary.length === 0) return null;
+    const preferred = statsSummary.find(s => s.currency === currency);
+    if (preferred) return preferred;
+    return statsSummary[0];
+  }, [statsSummary, currency]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,7 +29,7 @@ const Dashboard: React.FC = () => {
           transactionApi.list({ limit: 5 }),
         ]);
 
-        setSummary(summaryData);
+        setStatsSummary(summaryData);
         setRecentTransactions(transactionsData.data || []);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);

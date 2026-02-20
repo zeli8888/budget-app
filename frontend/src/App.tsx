@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { PreferenceProvider } from './contexts/PreferenceContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -18,7 +19,11 @@ const PrivateRoute: React.FC = () => {
     );
   }
 
-  return user ? <Outlet /> : <Navigate to="/login" />;
+  return user ?
+    <PreferenceProvider>
+      <Outlet />
+    </PreferenceProvider>
+    : <Navigate to="/login" />;
 };
 
 const App: React.FC = () => {
