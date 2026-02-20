@@ -26,13 +26,15 @@ type Transaction struct {
 }
 
 type TransactionFilter struct {
-	UserID    string
-	StartDate *time.Time
-	EndDate   *time.Time
-	Type      *TransactionType
-	Category  *string
-	Limit     int
-	Cursor    *int64
+	UserID        string
+	StartDate     *time.Time
+	EndDate       *time.Time
+	Currency      *string
+	Type          *TransactionType
+	Category      *string
+	PaymentMethod *string
+	Limit         int
+	Cursor        *int64
 }
 
 type TransactionRepository interface {

@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -81,6 +82,11 @@ func (h *TransactionHandler) List(c echo.Context) error {
 		}
 	}
 
+	if currency := c.QueryParam("currency"); currency != "" {
+		currency = strings.ToUpper(currency)
+		filter.Currency = &currency
+	}
+
 	if txType := c.QueryParam("type"); txType != "" {
 		t := domain.TransactionType(txType)
 		filter.Type = &t
@@ -88,6 +94,10 @@ func (h *TransactionHandler) List(c echo.Context) error {
 
 	if category := c.QueryParam("category"); category != "" {
 		filter.Category = &category
+	}
+
+	if paymentMethod := c.QueryParam("payment_method"); paymentMethod != "" {
+		filter.PaymentMethod = &paymentMethod
 	}
 
 	if limit := c.QueryParam("limit"); limit != "" {

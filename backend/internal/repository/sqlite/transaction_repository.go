@@ -226,6 +226,11 @@ func (r *TransactionRepository) GetByUserID(ctx context.Context, filter domain.T
 		args = append(args, *filter.EndDate)
 	}
 
+	if filter.Currency != nil {
+		conditions = append(conditions, "currency = ?")
+		args = append(args, *filter.Currency)
+	}
+
 	if filter.Type != nil {
 		conditions = append(conditions, "type = ?")
 		args = append(args, *filter.Type)
@@ -234,6 +239,11 @@ func (r *TransactionRepository) GetByUserID(ctx context.Context, filter domain.T
 	if filter.Category != nil {
 		conditions = append(conditions, "category = ?")
 		args = append(args, *filter.Category)
+	}
+
+	if filter.PaymentMethod != nil {
+		conditions = append(conditions, "payment_method = ?")
+		args = append(args, *filter.PaymentMethod)
 	}
 
 	if filter.Cursor != nil {
