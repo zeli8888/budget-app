@@ -6,14 +6,14 @@ import { formatAmount } from '../components/utils';
 import { usePreference } from '../contexts/PreferenceContext';
 
 const Dashboard: React.FC = () => {
-  const [statsSummary, setStatsSummary] = useState<StatsSummary[]>([]);
+  const [statsSummaryResponse, setStatsSummaryResponse] = useState<StatsSummary[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { currency, setCurrency, currencyOptions } = usePreference();
   const summary = useMemo(() => {
-    if (!statsSummary || statsSummary.length === 0) return null;
-    return statsSummary.find(s => s.currency === currency);
-  }, [statsSummary, currency]);
+    if (!statsSummaryResponse || statsSummaryResponse.length === 0) return null;
+    return statsSummaryResponse.find(s => s.currency === currency);
+  }, [statsSummaryResponse, currency]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
           transactionApi.list({ limit: 5 }),
         ]);
 
-        setStatsSummary(summaryData);
+        setStatsSummaryResponse(summaryData);
         setRecentTransactions(transactionsData.data || []);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);

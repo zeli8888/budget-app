@@ -13,6 +13,7 @@ import { Pie, Bar } from 'react-chartjs-2';
 import { statsApi, StatsSummary, CategoryStat } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { formatAmount } from '../components/utils';
+import { usePreference } from '../contexts/PreferenceContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -28,12 +29,15 @@ const COLORS = [
 ];
 
 const Stats: React.FC = () => {
-  const [summary, setSummary] = useState<StatsSummary | null>(null);
-  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [statsType, setStatsType] = useState<'expense' | 'income'>('expense');
+  const [statsSummaryResponse, setStatsSummaryResponse] = useState<StatsSummary[]>([]);
+  const [statsCategoryResponse, setStatsCategoryResponse] = useState<Record<string, CategoryStat[]>>({});
+  const { currency, setCurrency, currencyOptions } = usePreference();
+  const summary = useMemo(() => statsSummaryResponse.find(s => s.currency === currency), [statsSummaryResponse, currency]);
+  const categoryStats = useMemo(() => statsCategoryResponse[currency] || [], [statsCategoryResponse, currency]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -48,8 +52,8 @@ const Stats: React.FC = () => {
           }),
         ]);
 
-        setSummary(summaryData);
-        setCategoryStats(categoryData.data || []);
+        setStatsSummaryResponse(summaryData);
+        setStatsCategoryResponse(categoryData.data || {});
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
