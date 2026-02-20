@@ -4,7 +4,7 @@ import { currencyApi, categoryApi, accountApi } from '../services/api';
 const DEFAULT_CURRENCIES = ['EUR', 'USD', 'CNY'];
 
 const DEFAULT_CATEGORIES = {
-    expense: ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Education', 'Other'],
+    expense: ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Education', 'Housing', 'Other'],
     income: ['Salary', 'Freelance', 'Investment', 'Gift', 'Refund', 'Other'],
 };
 

@@ -7,6 +7,7 @@ import {
 } from '../services/api';
 import TransactionForm from '../components/TransactionForm';
 import TransactionList from '../components/TransactionList';
+import { usePreference } from '../contexts/PreferenceContext';
 
 const Transactions: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -19,6 +20,8 @@ const Transactions: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+
+  const { currencyOptions, categoryOptions, paymentOptions, loadPreferences } = usePreference();
 
   const fetchTransactions = useCallback(async (cursor?: number) => {
     try {
@@ -57,7 +60,7 @@ const Transactions: React.FC = () => {
     await transactionApi.create(data);
     setShowForm(false);
     setLoading(true);
-    await fetchTransactions();
+    await Promise.all([fetchTransactions(), loadPreferences()]);
     setLoading(false);
   };
 
@@ -66,7 +69,7 @@ const Transactions: React.FC = () => {
     await transactionApi.update(editingTransaction.id, data);
     setEditingTransaction(null);
     setLoading(true);
-    await fetchTransactions();
+    await Promise.all([fetchTransactions(), loadPreferences()]);
     setLoading(false);
   };
 
