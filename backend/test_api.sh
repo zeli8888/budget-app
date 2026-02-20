@@ -198,8 +198,8 @@ if [ -n "$CATEGORY_ID" ]; then
     RESPONSE=$(curl -s -X PUT "$API_URL/categories/$CATEGORY_ID" \
       -H "Authorization: $TOKEN" \
       -H "Content-Type: application/json" \
-      -d '{"name": "Food & Dining"}')
-    echo $RESPONSE | grep "Food & Dining" > /dev/null
+      -d '{"name": "Food and Dining"}')
+    echo $RESPONSE | grep "Food and Dining" > /dev/null
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}SUCCESS: Updated category name${NC}"
     else
