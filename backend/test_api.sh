@@ -460,78 +460,183 @@ else
 fi
 
 # ==========================================
-# 9. Cleanup - Delete Tests
+# 9. Cleanup - Delete Tests (COMPREHENSIVE)
 # ==========================================
-echo -e "\n${CYAN}=== Cleanup Tests ===${NC}"
+echo -e "\n${CYAN}=== Comprehensive Cleanup - Removing ALL Test Data ===${NC}"
 
-# Delete Transaction
-echo -e "\n${CYAN}[9.1] Testing Delete Transaction...${NC}"
-if [ -n "$TX_ID" ]; then
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/transactions/$TX_ID" -H "Authorization: $TOKEN")
-    if [ "$HTTP_CODE" == "204" ]; then
-        echo -e "${GREEN}SUCCESS: Deleted transaction (204)${NC}"
-    else
-        echo -e "${RED}FAILED: Delete transaction failed with code $HTTP_CODE${NC}"
-    fi
+# Strategy: Delete in dependency order
+# 1. Transactions (no dependencies)
+# 2. Accounts (depend on currencies)
+# 3. Categories (independent)
+# 4. Currencies (last, as accounts depend on them)
+
+# ==========================================
+# 9.1 Delete ALL Transactions
+# ==========================================
+echo -e "\n${CYAN}[9.1] Deleting ALL Transactions...${NC}"
+
+# Get all transaction IDs
+ALL_TX_IDS=$(curl -s -X GET "$API_URL/transactions?limit=1000" -H "Authorization: $TOKEN" | grep -o '"id":[0-9]*' | cut -d':' -f2 | sort -u)
+
+if [ -n "$ALL_TX_IDS" ]; then
+    TX_COUNT=0
+    for TX_ID in $ALL_TX_IDS; do
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/transactions/$TX_ID" -H "Authorization: $TOKEN")
+        if [ "$HTTP_CODE" == "204" ]; then
+            TX_COUNT=$((TX_COUNT + 1))
+        else
+            echo -e "${RED}Failed to delete transaction $TX_ID (HTTP $HTTP_CODE)${NC}"
+        fi
+    done
+    echo -e "${GREEN}✓ Deleted $TX_COUNT transactions${NC}"
+else
+    echo -e "${YELLOW}No transactions to delete${NC}"
 fi
 
-# Verify Transaction Deletion
-echo -e "\n${CYAN}[9.2] Verifying Transaction Deletion...${NC}"
-if [ -n "$TX_ID" ]; then
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$API_URL/transactions/$TX_ID" -H "Authorization: $TOKEN")
-    if [ "$HTTP_CODE" == "404" ]; then
-        echo -e "${GREEN}SUCCESS: Transaction not found (404) as expected${NC}"
-    else
-        echo -e "${RED}FAILED: Transaction still exists (Code: $HTTP_CODE)${NC}"
-    fi
+# ==========================================
+# 9.2 Delete ALL Accounts
+# ==========================================
+echo -e "\n${CYAN}[9.2] Deleting ALL Accounts...${NC}"
+
+# Get all account IDs
+ALL_ACCOUNT_IDS=$(curl -s -X GET "$API_URL/accounts" -H "Authorization: $TOKEN" | grep -o '"id":[0-9]*' | cut -d':' -f2 | sort -u)
+
+if [ -n "$ALL_ACCOUNT_IDS" ]; then
+    ACCOUNT_COUNT=0
+    for ACCT_ID in $ALL_ACCOUNT_IDS; do
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/accounts/$ACCT_ID" -H "Authorization: $TOKEN")
+        if [ "$HTTP_CODE" == "204" ]; then
+            ACCOUNT_COUNT=$((ACCOUNT_COUNT + 1))
+        else
+            echo -e "${RED}Failed to delete account $ACCT_ID (HTTP $HTTP_CODE)${NC}"
+        fi
+    done
+    echo -e "${GREEN}✓ Deleted $ACCOUNT_COUNT accounts${NC}"
+else
+    echo -e "${YELLOW}No accounts to delete${NC}"
 fi
 
-# Delete Income Transaction
-if [ -n "$TX_ID_INCOME" ]; then
-    curl -s -o /dev/null -X DELETE "$API_URL/transactions/$TX_ID_INCOME" -H "Authorization: $TOKEN"
+# ==========================================
+# 9.3 Delete ALL Categories (both types)
+# ==========================================
+echo -e "\n${CYAN}[9.3] Deleting ALL Categories...${NC}"
+
+# Get all expense categories
+EXPENSE_CAT_IDS=$(curl -s -X GET "$API_URL/categories?type=expense" -H "Authorization: $TOKEN" | grep -o '"id":[0-9]*' | cut -d':' -f2 | sort -u)
+
+# Get all income categories
+INCOME_CAT_IDS=$(curl -s -X GET "$API_URL/categories?type=income" -H "Authorization: $TOKEN" | grep -o '"id":[0-9]*' | cut -d':' -f2 | sort -u)
+
+# Combine and deduplicate
+ALL_CAT_IDS=$(echo -e "$EXPENSE_CAT_IDS\n$INCOME_CAT_IDS" | sort -u | grep -v '^$')
+
+if [ -n "$ALL_CAT_IDS" ]; then
+    CAT_COUNT=0
+    for CAT_ID in $ALL_CAT_IDS; do
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/categories/$CAT_ID" -H "Authorization: $TOKEN")
+        if [ "$HTTP_CODE" == "204" ]; then
+            CAT_COUNT=$((CAT_COUNT + 1))
+        else
+            echo -e "${RED}Failed to delete category $CAT_ID (HTTP $HTTP_CODE)${NC}"
+        fi
+    done
+    echo -e "${GREEN}✓ Deleted $CAT_COUNT categories${NC}"
+else
+    echo -e "${YELLOW}No categories to delete${NC}"
 fi
 
-# Delete Category
-echo -e "\n${CYAN}[9.3] Testing Delete Category...${NC}"
-if [ -n "$CATEGORY_ID" ]; then
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/categories/$CATEGORY_ID" -H "Authorization: $TOKEN")
-    if [ "$HTTP_CODE" == "204" ]; then
-        echo -e "${GREEN}SUCCESS: Deleted category (204)${NC}"
-    else
-        echo -e "${RED}FAILED: Delete category failed with code $HTTP_CODE${NC}"
-    fi
+# ==========================================
+# 9.4 Delete ALL Currencies
+# ==========================================
+echo -e "\n${CYAN}[9.4] Deleting ALL Currencies...${NC}"
+
+# Get all currency IDs
+ALL_CURRENCY_IDS=$(curl -s -X GET "$API_URL/currencies" -H "Authorization: $TOKEN" | grep -o '"id":[0-9]*' | cut -d':' -f2 | sort -u)
+
+if [ -n "$ALL_CURRENCY_IDS" ]; then
+    CURRENCY_COUNT=0
+    for CURR_ID in $ALL_CURRENCY_IDS; do
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/currencies/$CURR_ID" -H "Authorization: $TOKEN")
+        if [ "$HTTP_CODE" == "204" ]; then
+            CURRENCY_COUNT=$((CURRENCY_COUNT + 1))
+        else
+            echo -e "${RED}Failed to delete currency $CURR_ID (HTTP $HTTP_CODE)${NC}"
+        fi
+    done
+    echo -e "${GREEN}✓ Deleted $CURRENCY_COUNT currencies${NC}"
+else
+    echo -e "${YELLOW}No currencies to delete${NC}"
 fi
 
-# Delete income category
-if [ -n "$CATEGORY_ID_INCOME" ]; then
-    curl -s -o /dev/null -X DELETE "$API_URL/categories/$CATEGORY_ID_INCOME" -H "Authorization: $TOKEN"
+# ==========================================
+# 9.5 Verification - Ensure Everything is Clean
+# ==========================================
+echo -e "\n${CYAN}[9.5] Verifying Complete Cleanup...${NC}"
+
+VERIFY_PASS=true
+
+# Check Transactions
+TX_RESPONSE=$(curl -s -X GET "$API_URL/transactions?limit=1" -H "Authorization: $TOKEN")
+TX_REMAINING=$(echo $TX_RESPONSE | grep -o '"id":[0-9]*' | wc -l)
+if [ "$TX_REMAINING" -eq 0 ]; then
+    echo -e "${GREEN}✓ Transactions: Clean (0 remaining)${NC}"
+else
+    echo -e "${RED}✗ Transactions: $TX_REMAINING remaining!${NC}"
+    VERIFY_PASS=false
 fi
 
-# Delete Currency
-echo -e "\n${CYAN}[9.4] Testing Delete Currency...${NC}"
-if [ -n "$CURRENCY_ID" ]; then
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/currencies/$CURRENCY_ID" -H "Authorization: $TOKEN")
-    if [ "$HTTP_CODE" == "204" ]; then
-        echo -e "${GREEN}SUCCESS: Deleted currency (204)${NC}"
-    else
-        echo -e "${RED}FAILED: Delete currency failed with code $HTTP_CODE${NC}"
-    fi
+# Check Accounts
+ACCT_RESPONSE=$(curl -s -X GET "$API_URL/accounts" -H "Authorization: $TOKEN")
+ACCT_REMAINING=$(echo $ACCT_RESPONSE | grep -o '"id":[0-9]*' | wc -l)
+if [ "$ACCT_REMAINING" -eq 0 ]; then
+    echo -e "${GREEN}✓ Accounts: Clean (0 remaining)${NC}"
+else
+    echo -e "${RED}✗ Accounts: $ACCT_REMAINING remaining!${NC}"
+    VERIFY_PASS=false
 fi
 
-# Delete Account
-echo -e "\n${CYAN}[9.5] Testing Delete Account...${NC}"
-if [ -n "$ACCOUNT_ID" ]; then
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$API_URL/accounts/$ACCOUNT_ID" -H "Authorization: $TOKEN")
-    if [ "$HTTP_CODE" == "204" ]; then
-        echo -e "${GREEN}SUCCESS: Deleted account (204)${NC}"
-    else
-        echo -e "${RED}FAILED: Delete account failed with code $HTTP_CODE${NC}"
-    fi
+# Check Categories
+CAT_RESPONSE=$(curl -s -X GET "$API_URL/categories" -H "Authorization: $TOKEN")
+CAT_REMAINING=$(echo $CAT_RESPONSE | grep -o '"id":[0-9]*' | wc -l)
+if [ "$CAT_REMAINING" -eq 0 ]; then
+    echo -e "${GREEN}✓ Categories: Clean (0 remaining)${NC}"
+else
+    echo -e "${RED}✗ Categories: $CAT_REMAINING remaining!${NC}"
+    VERIFY_PASS=false
 fi
 
-# Delete EUR account
-if [ -n "$ACCOUNT_ID_EUR" ]; then
-    curl -s -o /dev/null -X DELETE "$API_URL/accounts/$ACCOUNT_ID_EUR" -H "Authorization: $TOKEN"
+# Check Currencies
+CURR_RESPONSE=$(curl -s -X GET "$API_URL/currencies" -H "Authorization: $TOKEN")
+CURR_REMAINING=$(echo $CURR_RESPONSE | grep -o '"id":[0-9]*' | wc -l)
+if [ "$CURR_REMAINING" -eq 0 ]; then
+    echo -e "${GREEN}✓ Currencies: Clean (0 remaining)${NC}"
+else
+    echo -e "${RED}✗ Currencies: $CURR_REMAINING remaining!${NC}"
+    VERIFY_PASS=false
+fi
+
+# Final verdict
+if [ "$VERIFY_PASS" = true ]; then
+    echo -e "\n${GREEN}╔═══════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║  ✓ CLEANUP COMPLETE - ALL DATA REMOVED  ║${NC}"
+    echo -e "${GREEN}╚═══════════════════════════════════════╝${NC}"
+else
+    echo -e "\n${RED}╔═══════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  ✗ CLEANUP INCOMPLETE - DATA REMAINING  ║${NC}"
+    echo -e "${RED}╚═══════════════════════════════════════╝${NC}"
+    
+    # Show details of remaining items
+    echo -e "\n${YELLOW}Remaining Transactions:${NC}"
+    echo $TX_RESPONSE | grep -o '"id":[0-9]*'
+    
+    echo -e "\n${YELLOW}Remaining Accounts:${NC}"
+    echo $ACCT_RESPONSE | grep -o '"id":[0-9]*'
+    
+    echo -e "\n${YELLOW}Remaining Categories:${NC}"
+    echo $CAT_RESPONSE | grep -o '"id":[0-9]*'
+    
+    echo -e "\n${YELLOW}Remaining Currencies:${NC}"
+    echo $CURR_RESPONSE | grep -o '"id":[0-9]*'
 fi
 
 # ==========================================
