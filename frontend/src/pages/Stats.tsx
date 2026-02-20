@@ -14,6 +14,7 @@ import { statsApi, StatsSummary, CategoryStat } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { formatAmount } from '../components/utils';
 import { usePreference } from '../contexts/PreferenceContext';
+import CurrencySwitcher from '../components/CurrencySwitcher';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -35,7 +36,7 @@ const Stats: React.FC = () => {
   const [statsType, setStatsType] = useState<'expense' | 'income'>('expense');
   const [statsSummaryResponse, setStatsSummaryResponse] = useState<StatsSummary[]>([]);
   const [statsCategoryResponse, setStatsCategoryResponse] = useState<Record<string, CategoryStat[]>>({});
-  const { currency, setCurrency, currencyOptions } = usePreference();
+  const { currency } = usePreference();
   const summary = useMemo(() => statsSummaryResponse.find(s => s.currency === currency), [statsSummaryResponse, currency]);
   const categoryStats = useMemo(() => statsCategoryResponse[currency] || [], [statsCategoryResponse, currency]);
 
@@ -123,7 +124,10 @@ const Stats: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Statistics</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-gray-900">Statistics</h1>
+        <CurrencySwitcher />
+      </div>
 
       <div className="bg-white rounded-2xl shadow-md p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -295,7 +299,7 @@ const Stats: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                          {formatAmount(stat.total, 'EUR')}
+                          {formatAmount(stat.total, currency)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                           {stat.percentage.toFixed(1)}%
