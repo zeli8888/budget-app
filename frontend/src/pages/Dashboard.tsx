@@ -4,17 +4,66 @@ import { statsApi, StatsSummary, transactionApi, Transaction } from '../services
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { formatAmount } from '../components/utils';
 import { usePreference } from '../contexts/PreferenceContext';
+import { useExchangeRate } from '../contexts/ExchangeRateContext';
 import CurrencySwitcher from '../components/CurrencySwitcher';
+import ExchangeToggle from '../components/ExchangeToggle';
 
 const Dashboard: React.FC = () => {
   const [statsSummaryResponse, setStatsSummaryResponse] = useState<StatsSummary[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { currency } = usePreference();
-  const summary = useMemo(() => {
-    if (!statsSummaryResponse || statsSummaryResponse.length === 0) return null;
-    return statsSummaryResponse.find(s => s.currency === currency);
-  }, [statsSummaryResponse, currency]);
+  const { convert, setCurrenciesNotSet, convertAll } = useExchangeRate();
+
+  // Calculate summary based on conversion mode
+  const { summary, missingCurrencies } = useMemo(() => {
+    if (!statsSummaryResponse || statsSummaryResponse.length === 0) {
+      return { summary: null, missingCurrencies: [] };
+    }
+
+    if (!convertAll) {
+      return {
+        summary: statsSummaryResponse.find(s => s.currency === currency) || null,
+        missingCurrencies: []
+      };
+    }
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let notSet: string[] = [];
+
+    statsSummaryResponse.forEach(s => {
+      if (s.currency === currency) {
+        totalIncome += s.total_income;
+        totalExpense += s.total_expense;
+      } else {
+        const incomeConverted = convert(s.total_income, s.currency, currency);
+        const expenseConverted = convert(s.total_expense, s.currency, currency);
+        if (incomeConverted.error || expenseConverted.error) {
+          notSet.push(s.currency);
+        } else {
+          totalIncome += incomeConverted.result;
+          totalExpense += expenseConverted.result;
+        }
+      }
+    });
+
+    return {
+      summary: {
+        total_income: totalIncome,
+        total_expense: totalExpense,
+        net_balance: totalIncome - totalExpense,
+        currency: currency,
+      },
+      missingCurrencies: notSet
+    };
+  }, [statsSummaryResponse, convertAll, currency, convert]);
+
+  useEffect(() => {
+    if (missingCurrencies.length > 0) {
+      setCurrenciesNotSet(missingCurrencies);
+    }
+  }, [missingCurrencies, setCurrenciesNotSet]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,7 +104,10 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="mt-1 text-gray-500">{format(new Date(), 'MMMM yyyy')} Overview</p>
         </div>
-        <CurrencySwitcher />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <ExchangeToggle />
+          <CurrencySwitcher />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -65,7 +117,9 @@ const Dashboard: React.FC = () => {
               <span className="text-2xl">📈</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Income</p>
+              <p className="text-sm font-medium text-gray-500">
+                Total Income {convertAll && <span className="text-xs">(converted)</span>}
+              </p>
               <p className="text-2xl font-bold text-success-600">
                 {summary ? formatAmount(summary.total_income, summary.currency) : '$0.00'}
               </p>
@@ -79,7 +133,9 @@ const Dashboard: React.FC = () => {
               <span className="text-2xl">📉</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Expenses</p>
+              <p className="text-sm font-medium text-gray-500">
+                Total Expenses {convertAll && <span className="text-xs">(converted)</span>}
+              </p>
               <p className="text-2xl font-bold text-danger-600">
                 {summary ? formatAmount(summary.total_expense, summary.currency) : '$0.00'}
               </p>
@@ -93,7 +149,9 @@ const Dashboard: React.FC = () => {
               <span className="text-2xl">💰</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Net Balance</p>
+              <p className="text-sm font-medium text-gray-500">
+                Net Balance {convertAll && <span className="text-xs">(converted)</span>}
+              </p>
               <p className={`text-2xl font-bold ${summary && summary.net_balance >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
                 {summary ? formatAmount(summary.net_balance, summary.currency) : '$0.00'}
               </p>
@@ -149,7 +207,7 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           to="/transactions"
           className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow group"
@@ -173,6 +231,19 @@ const Dashboard: React.FC = () => {
           <div>
             <p className="font-semibold text-gray-900">View Statistics</p>
             <p className="text-sm text-gray-500">Analyze your spending</p>
+          </div>
+        </Link>
+
+        <Link
+          to="/accounts"
+          className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow group"
+        >
+          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center group-hover:bg-primary-200 transition-colors">
+            <span className="text-2xl">⚙️</span>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">Accounts & Settings</p>
+            <p className="text-sm text-gray-500">Manage your preferences</p>
           </div>
         </Link>
       </div>

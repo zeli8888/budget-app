@@ -61,6 +61,16 @@ const Layout: React.FC = () => {
                     <span className="hidden sm:inline">Statistics</span>
                     <span className="sm:hidden">📈</span>
                   </Link>
+                  <Link
+                    to="/accounts"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${isActive('/accounts')
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                      }`}
+                  >
+                    <span className="hidden sm:inline">Accounts</span>
+                    <span className="sm:hidden">⚙️</span>
+                  </Link>
                 </div>
               )}
 

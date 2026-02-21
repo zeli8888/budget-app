@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { currencyApi, categoryApi, accountApi } from '../services/api';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { currencyApi, categoryApi, accountApi, Currency, Category, Account, } from '../services/api';
 
 const DEFAULT_CURRENCIES = ['EUR', 'USD', 'CNY'];
 
@@ -25,6 +25,9 @@ interface PreferenceContextType {
     paymentOptions: Option[];
     currency: string;
     setCurrency: (currency: string) => void;
+    currencies: Currency[];
+    categories: Category[];
+    accounts: Account[];
     loadPreferences: () => Promise<void>;
 }
 
@@ -47,15 +50,10 @@ export const usePreference = () => {
 }
 
 export const PreferenceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Initialize with defaults immediately
-    const [currencyOptions, setCurrencyOptions] = useState<Option[]>(() => toOptions(DEFAULT_CURRENCIES));
-    const [categoryOptions, setCategoryOptions] = useState(() => ({
-        expense: toOptions(DEFAULT_CATEGORIES.expense),
-        income: toOptions(DEFAULT_CATEGORIES.income)
-    }));
-    const [paymentOptions, setPaymentOptions] = useState<Option[]>(() => toOptions(DEFAULT_PAYMENT_METHODS));
-
     const [currency, setCurrency] = useState<string>('EUR');
+    const [currencies, setCurrencies] = useState<Currency[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
 
     const loadPreferences = async () => {
         try {
@@ -66,33 +64,9 @@ export const PreferenceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 accountApi.list().catch(() => ({ data: [] })),
             ]);
 
-            // 1. Currencies
-            if (currenciesRes.data?.length) {
-                const fetchedCodes = currenciesRes.data.map((c: any) => c.code);
-                setCurrencyOptions(mergeToOptions(DEFAULT_CURRENCIES, fetchedCodes));
-            }
-
-            // 2. Categories
-            if (categoriesRes.data?.length) {
-                const fetchedExpense = categoriesRes.data
-                    .filter((c: any) => c.type === 'expense')
-                    .map((c: any) => c.name);
-
-                const fetchedIncome = categoriesRes.data
-                    .filter((c: any) => c.type === 'income')
-                    .map((c: any) => c.name);
-
-                setCategoryOptions({
-                    expense: mergeToOptions(DEFAULT_CATEGORIES.expense, fetchedExpense),
-                    income: mergeToOptions(DEFAULT_CATEGORIES.income, fetchedIncome),
-                });
-            }
-
-            // 3. Payment Methods
-            if (accountsRes.data?.length) {
-                const fetchedAccounts = accountsRes.data.map((a: any) => a.name);
-                setPaymentOptions(mergeToOptions(DEFAULT_PAYMENT_METHODS, fetchedAccounts));
-            }
+            setCurrencies(currenciesRes.data || []);
+            setCategories(categoriesRes.data || []);
+            setAccounts(accountsRes.data || []);
 
         } catch (error) {
             console.error('Critical failure loading preferences:', error);
@@ -103,6 +77,21 @@ export const PreferenceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         loadPreferences();
     }, []);
 
+    const currencyOptions = useMemo(() => {
+        return mergeToOptions(DEFAULT_CURRENCIES, currencies.map((c) => c.code));
+    }, [currencies]);
+
+    const categoryOptions = useMemo(() => {
+        const expenseOptions = mergeToOptions(DEFAULT_CATEGORIES.expense, categories.filter(c => c.type === 'expense').map(c => c.name));
+        const incomeOptions = mergeToOptions(DEFAULT_CATEGORIES.income, categories.filter(c => c.type === 'income').map(c => c.name));
+        return { expense: expenseOptions, income: incomeOptions };
+    }, [categories]);
+
+    const paymentOptions = useMemo(() => {
+        const accountOptions = accounts.map(a => a.name);
+        return mergeToOptions(DEFAULT_PAYMENT_METHODS, accountOptions);
+    }, [accounts]);
+
     return (
         <PreferenceContext.Provider
             value={{
@@ -111,6 +100,9 @@ export const PreferenceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 paymentOptions,
                 currency,
                 setCurrency,
+                currencies,
+                categories,
+                accounts,
                 loadPreferences,
             }}
         >

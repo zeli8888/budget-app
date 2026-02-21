@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CreateTransactionInput, Transaction, UpdateTransactionInput } from '../services/api';
 import CreatableSelect from 'react-select/creatable';
 import { creatableSelectStyles } from './utils';
@@ -111,7 +111,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
           <CreatableSelect
             isClearable
             options={currencyOptions}
-            value={currencyOptions.find(opt => opt.value === currency) || (currency ? { value: currency, label: currency } : null)}
+            value={(currency ? { value: currency, label: currency } : null)}
             onChange={(newValue) => setCurrency(newValue ? newValue.value.toUpperCase() : '')}
             placeholder="Select..."
             classNames={creatableSelectStyles}
@@ -125,7 +125,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
           <CreatableSelect
             isClearable
             options={categoryOptions[type]}
-            value={categoryOptions[type].find(opt => opt.value === category) || (category ? { value: category, label: category } : null)}
+            value={(category ? { value: category, label: category } : null)}
             onChange={(newValue) => setCategory(newValue ? newValue.value : '')}
             placeholder="Select..."
             classNames={creatableSelectStyles}
@@ -136,7 +136,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
           <CreatableSelect
             isClearable
             options={paymentOptions}
-            value={paymentOptions.find(opt => opt.value === paymentMethod) || (paymentMethod ? { value: paymentMethod, label: paymentMethod } : null)}
+            value={(paymentMethod ? { value: paymentMethod, label: paymentMethod } : null)}
             onChange={(newValue) => setPaymentMethod(newValue ? newValue.value : '')}
             placeholder="Select..."
             classNames={creatableSelectStyles}

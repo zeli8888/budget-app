@@ -2,10 +2,13 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PreferenceProvider } from './contexts/PreferenceContext';
+import { ExchangeRateProvider } from './contexts/ExchangeRateContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Stats from './pages/Stats';
+import Accounts from './pages/Accounts';
+import ExchangeRates from './pages/ExchangeRates';
 import Layout from './components/Layout';
 
 const PrivateRoute: React.FC = () => {
@@ -21,7 +24,9 @@ const PrivateRoute: React.FC = () => {
 
   return user ?
     <PreferenceProvider>
-      <Outlet />
+      <ExchangeRateProvider>
+        <Outlet />
+      </ExchangeRateProvider>
     </PreferenceProvider>
     : <Navigate to="/login" />;
 };
@@ -41,6 +46,8 @@ const App: React.FC = () => {
               <Route index element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="stats" element={<Stats />} />
+              <Route path="accounts" element={<Accounts />} />
+              <Route path="exchange-rates" element={<ExchangeRates />} />
             </Route>
           </Route>
         </Routes>

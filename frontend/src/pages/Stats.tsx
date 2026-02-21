@@ -14,7 +14,9 @@ import { statsApi, StatsSummary, CategoryStat } from '../services/api';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { formatAmount } from '../components/utils';
 import { usePreference } from '../contexts/PreferenceContext';
+import { useExchangeRate } from '../contexts/ExchangeRateContext';
 import CurrencySwitcher from '../components/CurrencySwitcher';
+import ExchangeToggle from '../components/ExchangeToggle';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -36,9 +38,90 @@ const Stats: React.FC = () => {
   const [statsType, setStatsType] = useState<'expense' | 'income'>('expense');
   const [statsSummaryResponse, setStatsSummaryResponse] = useState<StatsSummary[]>([]);
   const [statsCategoryResponse, setStatsCategoryResponse] = useState<Record<string, CategoryStat[]>>({});
+  const [convertAll, setConvertAll] = useState(false);
   const { currency } = usePreference();
-  const summary = useMemo(() => statsSummaryResponse.find(s => s.currency === currency), [statsSummaryResponse, currency]);
-  const categoryStats = useMemo(() => statsCategoryResponse[currency] || [], [statsCategoryResponse, currency]);
+  const { convert, isRateSet } = useExchangeRate();
+
+  // Calculate summary based on conversion mode
+  const summary = useMemo(() => {
+    if (!statsSummaryResponse || statsSummaryResponse.length === 0) return null;
+
+    if (!convertAll) {
+      return statsSummaryResponse.find(s => s.currency === currency) || null;
+    }
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let allRatesAvailable = true;
+
+    statsSummaryResponse.forEach(s => {
+      if (s.currency === currency) {
+        totalIncome += s.total_income;
+        totalExpense += s.total_expense;
+      } else if (isRateSet(s.currency) && isRateSet(currency)) {
+        totalIncome += convert(s.total_income, s.currency, currency);
+        totalExpense += convert(s.total_expense, s.currency, currency);
+      } else {
+        allRatesAvailable = false;
+      }
+    });
+
+    if (!allRatesAvailable) {
+      return statsSummaryResponse.find(s => s.currency === currency) || null;
+    }
+
+    return {
+      total_income: totalIncome,
+      total_expense: totalExpense,
+      net_balance: totalIncome - totalExpense,
+      currency: currency,
+    };
+  }, [statsSummaryResponse, currency, convertAll, convert, isRateSet]);
+
+  // Calculate category stats based on conversion mode
+  const categoryStats = useMemo(() => {
+    if (!convertAll) {
+      return statsCategoryResponse[currency] || [];
+    }
+
+    // Merge all currency category stats into one
+    const mergedStats: Record<string, { total: number; count: number }> = {};
+    let allRatesAvailable = true;
+
+    Object.entries(statsCategoryResponse).forEach(([curr, stats]) => {
+      stats.forEach(stat => {
+        if (!mergedStats[stat.category]) {
+          mergedStats[stat.category] = { total: 0, count: 0 };
+        }
+
+        if (curr === currency) {
+          mergedStats[stat.category].total += stat.total;
+          mergedStats[stat.category].count += stat.count;
+        } else if (isRateSet(curr) && isRateSet(currency)) {
+          mergedStats[stat.category].total += convert(stat.total, curr, currency);
+          mergedStats[stat.category].count += stat.count;
+        } else {
+          allRatesAvailable = false;
+        }
+      });
+    });
+
+    if (!allRatesAvailable) {
+      return statsCategoryResponse[currency] || [];
+    }
+
+    // Calculate percentages
+    const totalAmount = Object.values(mergedStats).reduce((sum, s) => sum + s.total, 0);
+    const result: CategoryStat[] = Object.entries(mergedStats).map(([category, data]) => ({
+      category,
+      total: data.total,
+      count: data.count,
+      percentage: totalAmount > 0 ? (data.total / totalAmount) * 100 : 0,
+    }));
+
+    // Sort by total descending
+    return result.sort((a, b) => b.total - a.total);
+  }, [statsCategoryResponse, currency, convertAll, convert, isRateSet]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -126,7 +209,10 @@ const Stats: React.FC = () => {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Statistics</h1>
-        <CurrencySwitcher />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <ExchangeToggle enabled={convertAll} onToggle={setConvertAll} />
+          <CurrencySwitcher />
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-md p-6">
@@ -170,19 +256,25 @@ const Stats: React.FC = () => {
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-xl shadow-md p-6">
-            <p className="text-sm font-medium text-gray-500 mb-1">Total Income</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              Total Income {convertAll && <span className="text-xs">(converted)</span>}
+            </p>
             <p className="text-2xl font-bold text-success-600">
               {formatAmount(summary.total_income, summary.currency)}
             </p>
           </div>
           <div className="bg-white rounded-xl shadow-md p-6">
-            <p className="text-sm font-medium text-gray-500 mb-1">Total Expenses</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              Total Expenses {convertAll && <span className="text-xs">(converted)</span>}
+            </p>
             <p className="text-2xl font-bold text-danger-600">
               {formatAmount(summary.total_expense, summary.currency)}
             </p>
           </div>
           <div className="bg-white rounded-xl shadow-md p-6">
-            <p className="text-sm font-medium text-gray-500 mb-1">Net Balance</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              Net Balance {convertAll && <span className="text-xs">(converted)</span>}
+            </p>
             <p className={`text-2xl font-bold ${summary.net_balance >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
               {formatAmount(summary.net_balance, summary.currency)}
             </p>
@@ -192,7 +284,9 @@ const Stats: React.FC = () => {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Category Breakdown</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Category Breakdown {convertAll && <span className="text-sm font-normal text-gray-500">(all currencies converted)</span>}
+          </h2>
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${statsType === 'expense'
