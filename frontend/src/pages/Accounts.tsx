@@ -21,7 +21,7 @@ const Accounts: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     const { currencyOptions, loadPreferences, currency: selectedCurrency, currencies, categories, accounts } = usePreference();
-    const { convert, currenciesNotSet } = useExchangeRate();
+    const { convert, currenciesNotSet, setCurrenciesNotSet } = useExchangeRate();
 
     // Form states
     const [showCurrencyForm, setShowCurrencyForm] = useState(false);
@@ -214,40 +214,52 @@ const Accounts: React.FC = () => {
     };
 
     // Group accounts by name
-    const accountsByName = accounts.reduce((acc, account) => {
-        if (!acc[account.name]) {
-            acc[account.name] = [];
-        }
-        acc[account.name].push(account);
-        return acc;
-    }, {} as Record<string, Account[]>);
+    const accountsByName = useMemo(() => {
+        return accounts.reduce((acc, account) => {
+            if (!acc[account.name]) {
+                acc[account.name] = [];
+            }
+            acc[account.name].push(account);
+            return acc;
+        }, {} as Record<string, Account[]>);
+    }, [accounts]);
 
     // Calculate balances for selected currency
-    const balancesByCurrency = accounts.reduce((acc, account) => {
-        if (!acc[account.currency]) {
-            acc[account.currency] = 0;
-        }
-        acc[account.currency] += account.balance;
-        return acc;
-    }, {} as Record<string, number>);
+    const { balancesByCurrency, selectedCurrencyBalance } = useMemo(() => {
+        const balances: Record<string, number> = {};
+        accounts.forEach(account => {
+            balances[account.currency] = (balances[account.currency] || 0) + account.balance;
+        });
+        return { balancesByCurrency: balances, selectedCurrencyBalance: balances[selectedCurrency] || 0 };
+    }, [accounts, selectedCurrency]);
 
-    // Filter to show only selected currency balance
-    const selectedCurrencyBalance = balancesByCurrency[selectedCurrency] || 0;
 
-    // Calculate total converted balance
-    const totalConverted = useMemo(() => {
+    // Calculate total converted balance and currencies with missing exchange rates
+    const { totalConverted, missingCurrencies } = useMemo(() => {
         let total = 0;
+        const missing: string[] = [];
 
         Object.entries(balancesByCurrency).forEach(([curr, balance]) => {
             if (curr === selectedCurrency) {
                 total += balance;
             } else {
-                total += convert(balance, curr, selectedCurrency).result;
+                const converted = convert(balance, curr, selectedCurrency);
+                if (converted.error) {
+                    missing.push(converted.error);
+                } else {
+                    total += converted.result;
+                }
             }
         });
 
-        return total;
+        return { totalConverted: total, missingCurrencies: missing };
     }, [selectedCurrency, balancesByCurrency, convert]);
+
+    useEffect(() => {
+        if (missingCurrencies.length > 0) {
+            setCurrenciesNotSet(missingCurrencies);
+        }
+    }, [missingCurrencies, setCurrenciesNotSet]);
 
     if (loading) {
         return (
