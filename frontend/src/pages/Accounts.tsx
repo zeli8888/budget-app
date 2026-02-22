@@ -487,10 +487,12 @@ const Accounts: React.FC = () => {
                                         <div>
                                             <label className="form-label">Currency</label>
                                             <CreatableSelect
+                                                isClearable
                                                 options={currencyOptions}
-                                                value={{ value: accountCurrency, label: accountCurrency }}
+                                                value={accountCurrency ? { value: accountCurrency, label: accountCurrency } : null}
                                                 onChange={(newValue) => setAccountCurrency(newValue ? newValue.value.toUpperCase() : '')}
                                                 classNames={creatableSelectStyles}
+                                                placeholder="Select..."
                                             />
                                         </div>
                                         <div>

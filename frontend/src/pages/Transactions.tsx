@@ -8,6 +8,8 @@ import {
 import TransactionForm from '../components/TransactionForm';
 import TransactionList from '../components/TransactionList';
 import { usePreference } from '../contexts/PreferenceContext';
+import CreatableSelect from 'react-select/creatable';
+import { creatableSelectStyles } from '../components/utils';
 
 const Transactions: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -188,46 +190,38 @@ const Transactions: React.FC = () => {
 
               <div>
                 <label className="form-label">Currency</label>
-                <select
-                  value={currencyFilter}
-                  onChange={(e) => setCurrencyFilter(e.target.value)}
-                  className="form-input"
-                >
-                  <option value="">All Currencies</option>
-                  {currencyOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                <CreatableSelect
+                  isClearable
+                  options={currencyOptions}
+                  value={currencyFilter ? { value: currencyFilter, label: currencyFilter } : null}
+                  onChange={(newValue) => setCurrencyFilter(newValue ? newValue.value.toUpperCase() : '')}
+                  classNames={{ ...creatableSelectStyles, placeholder: () => '!text-gray-800 !text-sm' }}
+                  placeholder="All Currencies"
+                />
               </div>
 
               <div>
                 <label className="form-label">Category</label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="form-input"
-                >
-                  <option value="">All Categories</option>
-                  {activeCategoryOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <CreatableSelect
+                  isClearable
+                  options={activeCategoryOptions}
+                  value={categoryFilter ? { value: categoryFilter, label: categoryFilter } : null}
+                  onChange={(newValue) => setCategoryFilter(newValue ? newValue.value.toUpperCase() : '')}
+                  classNames={{ ...creatableSelectStyles, placeholder: () => '!text-gray-800 !text-sm' }}
+                  placeholder="All Categories"
+                />
               </div>
 
               <div>
                 <label className="form-label">Payment Method</label>
-                <select
-                  value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value)}
-                  className="form-input"
-                >
-                  <option value="">All Methods</option>
-                  {paymentOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                <CreatableSelect
+                  isClearable
+                  options={paymentOptions}
+                  value={paymentFilter ? { value: paymentFilter, label: paymentFilter } : null}
+                  onChange={(newValue) => setPaymentFilter(newValue ? newValue.value.toUpperCase() : '')}
+                  classNames={{ ...creatableSelectStyles, placeholder: () => '!text-gray-800 !text-sm' }}
+                  placeholder="All Payment Methods"
+                />
               </div>
             </div>
 

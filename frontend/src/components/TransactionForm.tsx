@@ -44,7 +44,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, initialData
         transaction_at: transactionAt,
         metadata,
       };
-
+      if (isNaN(data.amount) || currency.trim() === '' || type.trim() === '' || category.trim() === '' || paymentMethod.trim() === '' || transactionAt.trim() === '') {
+        setError('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
       await onSubmit(data);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to save transaction');
