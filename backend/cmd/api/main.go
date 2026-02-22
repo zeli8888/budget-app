@@ -62,6 +62,8 @@ func main() {
 	// Initialize Echo
 	e := echo.New()
 	e.HideBanner = true
+	// Tell Echo to look at X-Forwarded-For to find the real client IP
+	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 
 	// Middleware
 	e.Use(echomiddleware.Logger())
