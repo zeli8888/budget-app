@@ -72,6 +72,7 @@ pipeline {
                             docker run --rm \
                             --name budget-frontend \
                             --user \$(id -u):\$(id -g) \
+                            -e HOME=/tmp \
                             -v ${WORKSPACE}/frontend:/app \
                             -w /app \
                             ${DOCKER_IMAGE} \
