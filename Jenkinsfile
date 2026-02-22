@@ -11,29 +11,16 @@ pipeline {
         APP_ENV = "production"
         DOCKER_IMAGE = "node:20.17.0"
         HOST_TARGET_DIR = "/var/www/zeli8888/budget"
-        // Define flags to be used across stages
-        SHOULD_BUILD_BACKEND = false
-        SHOULD_BUILD_FRONTEND = false
     }
 
     stages {
-        stage('Detect Changes') {
-            steps {
-                script {
-                    // Check if backend files changed OR if manual param is true
-                    if (params.FORCE_BACKEND || currentBuild.changeSets.any { cs -> cs.items.any { it.paths.any { p -> p.path.startsWith('backend/') } } }) {
-                        env.SHOULD_BUILD_BACKEND = "true"
-                    }
-                    // Check if frontend files changed OR if manual param is true
-                    if (params.FORCE_FRONTEND || currentBuild.changeSets.any { cs -> cs.items.any { it.paths.any { p -> p.path.startsWith('frontend/') } } }) {
-                        env.SHOULD_BUILD_FRONTEND = "true"
-                    }
+        stage('Build Backend Image') {
+            when {
+                anyOf {
+                    expression { params.FORCE_BACKEND }
+                    changeset "backend/**"
                 }
             }
-        }
-
-        stage('Build Backend Image') {
-            when { expression { env.SHOULD_BUILD_BACKEND == "true" } }
             steps {
                 dir('backend') {
                     sh "docker build -t budget-backend ."
@@ -43,14 +30,24 @@ pipeline {
         }
 
         stage('Push Backend Images') {
-            when { expression { env.SHOULD_BUILD_BACKEND == "true" } }
+            when {
+                anyOf {
+                    expression { params.FORCE_BACKEND }
+                    changeset "backend/**"
+                }
+            }
             steps {
                 sh "docker push zeli8888/budget-backend:latest"
             }
         }
 
         stage('Deploy Backend') {
-            when { expression { env.SHOULD_BUILD_BACKEND == "true" } }
+            when {
+                anyOf {
+                    expression { params.FORCE_BACKEND }
+                    changeset "backend/**"
+                }
+            }
             steps {
                 dir('backend') {
                     sh '''
@@ -62,11 +59,15 @@ pipeline {
         }
 
         stage('Build Frontend') {
-            when { expression { env.SHOULD_BUILD_FRONTEND == "true" } }
+            when {
+                anyOf {
+                    expression { params.FORCE_FRONTEND }
+                    changeset "frontend/**"
+                }
+            }
             steps {
                 dir('frontend') {
                     script {
-                        // Note: changed ${WORKSPACE} to ${WORKSPACE}/frontend to keep the container focused
                         sh """
                             docker run --rm \
                             --name budget-frontend \
@@ -82,7 +83,12 @@ pipeline {
         }
 
         stage('Deploy Frontend') {
-            when { expression { env.SHOULD_BUILD_FRONTEND == "true" } }
+            when {
+                anyOf {
+                    expression { params.FORCE_FRONTEND }
+                    changeset "frontend/**"
+                }
+            }
             steps {
                 dir('frontend') {
                     script {
