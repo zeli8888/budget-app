@@ -60,9 +60,7 @@ const Dashboard: React.FC = () => {
   }, [statsSummaryResponse, convertAll, currency, convert]);
 
   useEffect(() => {
-    if (missingCurrencies.length > 0) {
-      setCurrenciesNotSet(missingCurrencies);
-    }
+    setCurrenciesNotSet(missingCurrencies);
   }, [missingCurrencies, setCurrenciesNotSet]);
 
   useEffect(() => {

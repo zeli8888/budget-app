@@ -256,9 +256,7 @@ const Accounts: React.FC = () => {
     }, [selectedCurrency, balancesByCurrency, convert]);
 
     useEffect(() => {
-        if (missingCurrencies.length > 0) {
-            setCurrenciesNotSet(missingCurrencies);
-        }
+        setCurrenciesNotSet(missingCurrencies);
     }, [missingCurrencies, setCurrenciesNotSet]);
 
     if (loading) {

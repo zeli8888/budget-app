@@ -38,45 +38,53 @@ const Stats: React.FC = () => {
   const [statsType, setStatsType] = useState<'expense' | 'income'>('expense');
   const [statsSummaryResponse, setStatsSummaryResponse] = useState<StatsSummary[]>([]);
   const [statsCategoryResponse, setStatsCategoryResponse] = useState<Record<string, CategoryStat[]>>({});
-  const [convertAll, setConvertAll] = useState(false);
   const { currency } = usePreference();
-  const { convert, isRateSet } = useExchangeRate();
+  const { convert, setCurrenciesNotSet, convertAll } = useExchangeRate();
 
   // Calculate summary based on conversion mode
-  const summary = useMemo(() => {
-    if (!statsSummaryResponse || statsSummaryResponse.length === 0) return null;
+  const { summary, missingCurrencies } = useMemo(() => {
+    if (!statsSummaryResponse || statsSummaryResponse.length === 0) return { summary: null, missingCurrencies: [] };
 
     if (!convertAll) {
-      return statsSummaryResponse.find(s => s.currency === currency) || null;
+      return {
+        summary: statsSummaryResponse.find(s => s.currency === currency) || null,
+        missingCurrencies: []
+      };
     }
 
     let totalIncome = 0;
     let totalExpense = 0;
-    let allRatesAvailable = true;
+    let notSet: string[] = [];
 
     statsSummaryResponse.forEach(s => {
       if (s.currency === currency) {
         totalIncome += s.total_income;
         totalExpense += s.total_expense;
-      } else if (isRateSet(s.currency) && isRateSet(currency)) {
-        totalIncome += convert(s.total_income, s.currency, currency);
-        totalExpense += convert(s.total_expense, s.currency, currency);
       } else {
-        allRatesAvailable = false;
+        const totalIncomeConverted = convert(s.total_income, s.currency, currency);
+        const totalExpenseConverted = convert(s.total_expense, s.currency, currency);
+        if (totalIncomeConverted.error || totalExpenseConverted.error) {
+          notSet.push(s.currency);
+        } else {
+          totalIncome += totalIncomeConverted.result;
+          totalExpense += totalExpenseConverted.result;
+        }
       }
     });
 
-    if (!allRatesAvailable) {
-      return statsSummaryResponse.find(s => s.currency === currency) || null;
-    }
-
     return {
-      total_income: totalIncome,
-      total_expense: totalExpense,
-      net_balance: totalIncome - totalExpense,
-      currency: currency,
+      summary: {
+        total_income: totalIncome,
+        total_expense: totalExpense,
+        net_balance: totalIncome - totalExpense,
+        currency: currency,
+      }, missingCurrencies: notSet
     };
-  }, [statsSummaryResponse, currency, convertAll, convert, isRateSet]);
+  }, [statsSummaryResponse, convertAll, currency, convert]);
+
+  useEffect(() => {
+    setCurrenciesNotSet(missingCurrencies);
+  }, [missingCurrencies, setCurrenciesNotSet]);
 
   // Calculate category stats based on conversion mode
   const categoryStats = useMemo(() => {
@@ -86,7 +94,6 @@ const Stats: React.FC = () => {
 
     // Merge all currency category stats into one
     const mergedStats: Record<string, { total: number; count: number }> = {};
-    let allRatesAvailable = true;
 
     Object.entries(statsCategoryResponse).forEach(([curr, stats]) => {
       stats.forEach(stat => {
@@ -97,18 +104,12 @@ const Stats: React.FC = () => {
         if (curr === currency) {
           mergedStats[stat.category].total += stat.total;
           mergedStats[stat.category].count += stat.count;
-        } else if (isRateSet(curr) && isRateSet(currency)) {
-          mergedStats[stat.category].total += convert(stat.total, curr, currency);
-          mergedStats[stat.category].count += stat.count;
         } else {
-          allRatesAvailable = false;
+          mergedStats[stat.category].total += convert(stat.total, curr, currency).result;
+          mergedStats[stat.category].count += stat.count;
         }
       });
     });
-
-    if (!allRatesAvailable) {
-      return statsCategoryResponse[currency] || [];
-    }
 
     // Calculate percentages
     const totalAmount = Object.values(mergedStats).reduce((sum, s) => sum + s.total, 0);
@@ -121,7 +122,7 @@ const Stats: React.FC = () => {
 
     // Sort by total descending
     return result.sort((a, b) => b.total - a.total);
-  }, [statsCategoryResponse, currency, convertAll, convert, isRateSet]);
+  }, [statsCategoryResponse, convertAll, currency, convert]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -210,7 +211,7 @@ const Stats: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Statistics</h1>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <ExchangeToggle enabled={convertAll} onToggle={setConvertAll} />
+          <ExchangeToggle />
           <CurrencySwitcher />
         </div>
       </div>
