@@ -22,6 +22,14 @@ This application provides a secure and highly customizable way for users to:
 5.  **Analyze Habits**: View statistical breakdowns of spending and income habits over specific periods.
 6.  **Flexible Metadata**: Attach arbitrary tags, memos, or location data to any transaction without altering the database schema.
 
+## 🎈 Demos
+![alt text](demo/budget-app-1.png) 
+![alt text](demo/budget-app-2.png) 
+![alt text](demo/budget-app-3.png) 
+![alt text](demo/budget-app-4.png) 
+![alt text](demo/budget-app-5.png)
+![alt text](demo/budget-app-6.png)
+
 ## 🗄️ Database Schema & Data Models
 
 The project uses **SQLite**. To maximize flexibility, I intentionally avoid strict foreign keys, meaning if you delete a custom category or currency, your historical transaction records remain completely intact.
