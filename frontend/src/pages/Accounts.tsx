@@ -13,6 +13,7 @@ import { usePreference } from '../contexts/PreferenceContext';
 import { useExchangeRate } from '../contexts/ExchangeRateContext';
 import CurrencySwitcher from '../components/CurrencySwitcher';
 import { Link } from 'react-router-dom';
+import ExchangeToggle from '../components/ExchangeToggle';
 
 type TabType = 'accounts' | 'currencies' | 'categories';
 
@@ -21,7 +22,7 @@ const Accounts: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     const { currencyOptions, loadPreferences, currency: selectedCurrency, currencies, categories, accounts } = usePreference();
-    const { convert, currenciesNotSet, setCurrenciesNotSet } = useExchangeRate();
+    const { convertAll, convert, currenciesNotSet, setCurrenciesNotSet } = useExchangeRate();
 
     // Form states
     const [showCurrencyForm, setShowCurrencyForm] = useState(false);
@@ -213,47 +214,40 @@ const Accounts: React.FC = () => {
         setAccountBalance('');
     };
 
-    // Group accounts by name
-    const accountsByName = useMemo(() => {
-        return accounts.reduce((acc, account) => {
-            if (!acc[account.name]) {
-                acc[account.name] = [];
-            }
-            acc[account.name].push(account);
-            return acc;
-        }, {} as Record<string, Account[]>);
-    }, [accounts]);
-
-    // Calculate balances for selected currency
-    const { balancesByCurrency, selectedCurrencyBalance } = useMemo(() => {
+    // Calculate balances for all currencies
+    const balancesByCurrency = useMemo(() => {
         const balances: Record<string, number> = {};
         accounts.forEach(account => {
             balances[account.currency] = (balances[account.currency] || 0) + account.balance;
         });
-        return { balancesByCurrency: balances, selectedCurrencyBalance: balances[selectedCurrency] || 0 };
-    }, [accounts, selectedCurrency]);
+        return balances;
+    }, [accounts]);
 
+    // Group accounts by name and convert balances if needed
+    const { accountsByName, missingCurrencies, totalConverted } = useMemo(() => {
+        let accountsByName: Record<string, Account[]> = {};
+        let missingCurrencies: string[] = [];
+        let totalConverted = 0;
 
-    // Calculate total converted balance and currencies with missing exchange rates
-    const { totalConverted, missingCurrencies } = useMemo(() => {
-        let total = 0;
-        const missing: string[] = [];
+        for (const account of accounts) {
+            let processedAccount = account;
 
-        Object.entries(balancesByCurrency).forEach(([curr, balance]) => {
-            if (curr === selectedCurrency) {
-                total += balance;
-            } else {
-                const converted = convert(balance, curr, selectedCurrency);
-                if (converted.error) {
-                    missing.push(converted.error);
+            if (convertAll) {
+                const { result, error } = convert(account.balance, account.currency, selectedCurrency);
+                if (error) {
+                    missingCurrencies.push(error);
                 } else {
-                    total += converted.result;
+                    processedAccount = { ...account, balance: result };
+                    totalConverted += result;
                 }
             }
-        });
 
-        return { totalConverted: total, missingCurrencies: missing };
-    }, [selectedCurrency, balancesByCurrency, convert]);
+            (accountsByName[account.name] ??= []).push(processedAccount);
+        }
+
+        return { accountsByName, missingCurrencies, totalConverted };
+
+    }, [accounts, selectedCurrency, convertAll, convert]);
 
     useEffect(() => {
         setCurrenciesNotSet(missingCurrencies);
@@ -275,6 +269,7 @@ const Accounts: React.FC = () => {
                     <p className="mt-1 text-gray-500">Manage your accounts, currencies, and categories</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <ExchangeToggle />
                     <CurrencySwitcher />
                 </div>
             </div>
@@ -285,8 +280,8 @@ const Accounts: React.FC = () => {
                     <p className="text-sm font-medium text-gray-500 mb-1">
                         Balance in {selectedCurrency}
                     </p>
-                    <p className={`text-2xl font-bold ${selectedCurrencyBalance >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                        {formatAmount(selectedCurrencyBalance, selectedCurrency)}
+                    <p className={`text-2xl font-bold ${(balancesByCurrency[selectedCurrency] || 0) >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                        {formatAmount(balancesByCurrency[selectedCurrency] || 0, selectedCurrency)}
                     </p>
                 </div>
 
@@ -361,7 +356,7 @@ const Accounts: React.FC = () => {
                                                     </span>
                                                 </div>
                                                 <span className={`text-sm font-mono font-bold ${acc.balance >= 0 ? 'text-success-700' : 'text-danger-600'}`}>
-                                                    {formatAmount(acc.balance, acc.currency)}
+                                                    {formatAmount(acc.balance, (convertAll && !currenciesNotSet.includes(acc.currency)) ? selectedCurrency : acc.currency)}
                                                 </span>
                                             </div>
                                         ))}
