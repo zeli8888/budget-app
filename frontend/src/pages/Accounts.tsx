@@ -381,7 +381,7 @@ const Accounts: React.FC = () => {
                             </div>
 
                             {/* Balances Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {Object.entries(balancesByCurrency).map(([currency, total]) => (
                                     <div
                                         key={currency}
@@ -399,8 +399,8 @@ const Accounts: React.FC = () => {
                                                 </span>
                                             </div>
 
-                                            <div className="mt-1">
-                                                <p className={`text-xl font-mono font-bold tracking-tight ${total >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                                            <div className="mt-1 overflow-x-auto pb-1">
+                                                <p className={`text-xl font-mono font-bold tracking-tight whitespace-nowrap ${total >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
                                                     {formatAmount(total, (convertAll && !currenciesNotSet.includes(currency)) ? selectedCurrency : currency)}
                                                 </p>
                                             </div>
