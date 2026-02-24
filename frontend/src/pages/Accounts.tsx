@@ -214,20 +214,11 @@ const Accounts: React.FC = () => {
         setAccountBalance('');
     };
 
-    // Calculate balances for all currencies
-    const balancesByCurrency = useMemo(() => {
-        const balances: Record<string, number> = {};
-        accounts.forEach(account => {
-            balances[account.currency] = (balances[account.currency] || 0) + account.balance;
-        });
-        return balances;
-    }, [accounts]);
-
-    // Group accounts by name and convert balances if needed
-    const { accountsByName, missingCurrencies, totalConverted } = useMemo(() => {
+    const { accountsByName, balancesByCurrency, missingCurrencies, totalBalance } = useMemo(() => {
         let accountsByName: Record<string, Account[]> = {};
+        let balancesByCurrency: Record<string, number> = {};
         let missingCurrencies: string[] = [];
-        let totalConverted = 0;
+        let totalBalance = 0;
 
         for (const account of accounts) {
             let processedAccount = account;
@@ -238,14 +229,17 @@ const Accounts: React.FC = () => {
                     missingCurrencies.push(error);
                 } else {
                     processedAccount = { ...account, balance: result };
-                    totalConverted += result;
+                    totalBalance += result;
                 }
             }
 
             (accountsByName[account.name] ??= []).push(processedAccount);
+            balancesByCurrency[account.currency] = (balancesByCurrency[account.currency] || 0) + processedAccount.balance;
         }
 
-        return { accountsByName, missingCurrencies, totalConverted };
+        totalBalance = convertAll ? totalBalance : (balancesByCurrency[selectedCurrency] || 0);
+
+        return { accountsByName, balancesByCurrency, missingCurrencies, totalBalance };
 
     }, [accounts, selectedCurrency, convertAll, convert]);
 
@@ -271,45 +265,6 @@ const Accounts: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <ExchangeToggle />
                     <CurrencySwitcher />
-                </div>
-            </div>
-
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-xl shadow-md p-6">
-                    <p className="text-sm font-medium text-gray-500 mb-1">
-                        Balance in {selectedCurrency}
-                    </p>
-                    <p className={`text-2xl font-bold ${(balancesByCurrency[selectedCurrency] || 0) >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                        {formatAmount(balancesByCurrency[selectedCurrency] || 0, selectedCurrency)}
-                    </p>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-md p-6">
-                    <p className="text-sm font-medium text-gray-500 mb-1">
-                        Total Converted to {selectedCurrency}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                        <p className={`text-2xl font-bold ${totalConverted >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                            {formatAmount(totalConverted, selectedCurrency)}
-                        </p>
-
-                        {currenciesNotSet.length > 0 ? (
-                            <Link to="/exchange-rates" className="flex items-center gap-2 shrink-0 whitespace-nowrap text-amber-600 hover:text-amber-700">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                                <span className="text-sm underline">Set exchange rates first</span>
-                            </Link>
-                        ) : (
-                            <Link to="/exchange-rates" className="flex items-center gap-2 shrink-0 whitespace-nowrap text-green-600 hover:text-green-700">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                <span className="text-sm underline">Edit exchange rates</span>
-                            </Link>
-                        )}
-                    </div>
                 </div>
             </div>
 
@@ -388,27 +343,71 @@ const Accounts: React.FC = () => {
                             <p>No balance data</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {Object.entries(balancesByCurrency).map(([currency, total]) => (
-                                <div
-                                    key={currency}
-                                    className="relative overflow-hidden group p-4 rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white hover:shadow-md transition-shadow"
-                                >
-                                    {/* Background "Watermark" for style */}
-                                    <div className="absolute -right-2 -bottom-2 text-gray-100 font-bold text-4xl select-none group-hover:text-blue-50 transition-colors">
-                                        {currency}
-                                    </div>
+                        <div className="flex-1 flex flex-col gap-6 lg:gap-8">
+                            {/* Total Summary Card */}
+                            <div className="relative overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-6">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    {convertAll ? `Total Converted (${selectedCurrency})` : `Total Balance (${selectedCurrency})`}
+                                </p>
 
-                                    <div className="relative z-10">
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
-                                            Total {currency}
-                                        </p>
-                                        <p className={`text-xl font-mono font-bold ${total >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                                            {formatAmount(total, currency)}
-                                        </p>
-                                    </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <p className={`text-3xl font-extrabold tracking-tight ${totalBalance >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                                        {formatAmount(totalBalance, selectedCurrency)}
+                                    </p>
+                                    {convertAll && (
+                                        currenciesNotSet.length > 0 ? (
+                                            <Link
+                                                to="/exchange-rates"
+                                                className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 rounded-lg border border-amber-200/60 transition-colors shrink-0"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                <span className="text-sm font-semibold">Set exchange rates first</span>
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                to="/exchange-rates"
+                                                className="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg border border-gray-200 transition-colors shrink-0"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                <span className="text-sm font-semibold">Edit exchange rates</span>
+                                            </Link>
+                                        )
+                                    )}
                                 </div>
-                            ))}
+                            </div>
+
+                            {/* Balances Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {Object.entries(balancesByCurrency).map(([currency, total]) => (
+                                    <div
+                                        key={currency}
+                                        className="relative overflow-hidden group p-4 rounded-xl border border-gray-100 bg-white hover:border-blue-100 hover:shadow-md hover:shadow-blue-500/5 transition-all duration-300"
+                                    >
+                                        {/* Background "Watermark" for style */}
+                                        <div className="absolute -right-2 -bottom-2 text-gray-50 font-black text-5xl select-none group-hover:text-blue-50 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                                            {currency}
+                                        </div>
+
+                                        <div className="relative z-10 flex flex-col h-full justify-between gap-2">
+                                            <div className="flex items-start">
+                                                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest px-2 py-1 bg-gray-50 border border-gray-100 rounded-md">
+                                                    {currency}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-1">
+                                                <p className={`text-xl font-mono font-bold tracking-tight ${total >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                                                    {formatAmount(total, (convertAll && !currenciesNotSet.includes(currency)) ? selectedCurrency : currency)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
