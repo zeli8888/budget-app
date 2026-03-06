@@ -206,7 +206,7 @@ const Transactions: React.FC = () => {
                   isClearable
                   options={activeCategoryOptions}
                   value={categoryFilter ? { value: categoryFilter, label: categoryFilter } : null}
-                  onChange={(newValue) => setCategoryFilter(newValue ? newValue.value.toUpperCase() : '')}
+                  onChange={(newValue) => setCategoryFilter(newValue ? newValue.value : '')}
                   classNames={{ ...creatableSelectStyles, placeholder: () => '!text-gray-800 !text-sm' }}
                   placeholder="All Categories"
                 />
@@ -218,7 +218,7 @@ const Transactions: React.FC = () => {
                   isClearable
                   options={paymentOptions}
                   value={paymentFilter ? { value: paymentFilter, label: paymentFilter } : null}
-                  onChange={(newValue) => setPaymentFilter(newValue ? newValue.value.toUpperCase() : '')}
+                  onChange={(newValue) => setPaymentFilter(newValue ? newValue.value : '')}
                   classNames={{ ...creatableSelectStyles, placeholder: () => '!text-gray-800 !text-sm' }}
                   placeholder="All Payment Methods"
                 />
